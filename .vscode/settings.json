@@ -9,6 +9,7 @@
     "python.testing.pytestEnabled": true,
     "conventionalCommits.scopes": [
         "project",
-        "DATA"
+        "DATA",
+        "utils"
     ]
 }
