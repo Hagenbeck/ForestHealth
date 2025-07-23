@@ -59,6 +59,7 @@ dependencies:
   - freeglut=3.4.0=h8a1e904_1
   - freetype=2.13.3=h0620614_0
   - fribidi=1.0.10=h8d14728_0
+  - geojson=3.2.0=pyhd8ed1ab_0
   - geos=3.13.1=h9ea8674_0
   - giflib=5.2.2=h64bf75a_0
   - graphite2=1.3.14=he0c23c2_0
@@ -186,6 +187,7 @@ dependencies:
   - pytest=8.4.1=py313haa95532_0
   - python=3.13.5=h286a616_100_cp313
   - python-dateutil=2.9.0.post0=pyhe01879c_2
+  - python-dotenv=1.1.1=pyhe01879c_0
   - python-fastjsonschema=2.21.1=pyhd8ed1ab_0
   - python-json-logger=2.0.7=pyhd8ed1ab_0
   - python-tzdata=2025.2=pyhd8ed1ab_0
