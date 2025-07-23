@@ -1,8 +1,38 @@
-## 📜 License Notice
+## Environment Setup
 
-This code is publicly visible for **demonstration and portfolio purposes only**.
+1. **Create conda environment:**
+```bash
+  conda env create -f environment.yml
+  conda activate forestHealth
+```
 
-> ⚠️ No license has been granted.  
-> You may **not** copy, modify, redistribute, or use this code in any form without explicit permission from the author.
+2. **Copy the template:**
+```bash
+  cp template.env .env
+```
+3. **Add your credentials to .env:**
+```
+SENTINELHUB_CLIENT_ID=your-actual-client-id
+SENTINELHUB_CLIENT_SECRET=your-actual-secret
+```
 
-For inquiries, contact github@peer-schlieker.de
+
+## License Notice
+
+This project is available for educational and demonstration purposes only.
+What you can do:
+
+✅ View and study the code
+✅ Run it locally for learning
+✅ Use it as inspiration for your own projects
+
+What you cannot do:
+
+❌ Copy or redistribute this code
+❌ Use it for commercial purposes
+❌ Modify and redistribute without permission
+
+For any other use cases or questions, please contact: github@peer-schlieker.de
+
+#### Acknowledgments
+This project uses several open-source libraries. See environment.yml for the full list.
