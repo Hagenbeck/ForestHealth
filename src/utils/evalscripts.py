@@ -12,8 +12,7 @@ function setup() {
   return {
     input: ["B02", "B03", "B04"],
     output: { id: 'default',
-              bands: 3,
-              sampleType: 'UINT8'}
+              bands: 3}
   };
 }
 
