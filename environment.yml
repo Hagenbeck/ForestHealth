@@ -8,6 +8,7 @@ channels:
 dependencies:
   - _libavif_api=1.3.0=h57928b3_0
   - aenum=3.1.15=pyhd8ed1ab_1
+  - affine=2.4.0=pyhd8ed1ab_1
   - anyio=4.9.0=pyh29332c3_0
   - aom=3.9.1=he0c23c2_0
   - argon2-cffi=25.1.0=pyhd8ed1ab_0
@@ -22,8 +23,10 @@ dependencies:
   - bleach-with-css=6.2.0=h82add2a_4
   - blinker=1.9.0=pyhff2d567_0
   - blosc=1.21.3=h6c2663c_0
+  - boost-cpp=1.85.0=h6f18f0d_2
   - boto3=1.39.10=pyhd8ed1ab_0
   - botocore=1.39.10=pyge310_1234567_0
+  - branca=0.8.1=pyhd8ed1ab_0
   - brotli=1.0.9=hcfcfb64_9
   - brotli-bin=1.0.9=hcfcfb64_9
   - brotli-python=1.0.9=py313h5da7b33_9
@@ -38,6 +41,8 @@ dependencies:
   - charls=2.2.0=h39d44d4_0
   - charset-normalizer=3.4.2=pyhd8ed1ab_0
   - click=8.2.1=pyh7428d3b_0
+  - click-plugins=1.1.1.2=pyhd8ed1ab_0
+  - cligj=0.7.2=pyhd8ed1ab_2
   - colorama=0.4.6=pyhd8ed1ab_1
   - comm=0.2.2=pyhd8ed1ab_1
   - contourpy=1.3.2=py313h1ec8472_0
@@ -58,19 +63,24 @@ dependencies:
   - fqdn=1.5.1=pyhd8ed1ab_1
   - freeglut=3.4.0=h8a1e904_1
   - freetype=2.13.3=h0620614_0
+  - freexl=2.0.0=h8276f4a_0
   - fribidi=1.0.10=h8d14728_0
   - geojson=3.2.0=pyhd8ed1ab_0
-  - geos=3.13.1=h9ea8674_0
+  - geos=3.10.6=hd4c2148_0
+  - geotiff=1.7.0=hbf7d8e7_4
   - giflib=5.2.2=h64bf75a_0
   - graphite2=1.3.14=he0c23c2_0
   - h11=0.16.0=pyhd8ed1ab_0
   - h2=4.2.0=pyhd8ed1ab_0
   - harfbuzz=10.2.0=he2f9f60_1
   - hatchling=1.27.0=pypyhd8ed1ab_0
+  - hdf4=4.2.13=h0e5069d_1005
+  - hdf5=1.14.5=ha36df97_2
   - hpack=4.1.0=pyhd8ed1ab_0
   - httpcore=1.0.9=pyh29332c3_0
   - httpx=0.28.1=pyhd8ed1ab_0
   - hyperframe=6.1.0=pyhd8ed1ab_0
+  - icc_rt=2022.1.0=h6049295_2
   - icu=73.2=h63175ca_0
   - idna=3.10=pyhd8ed1ab_1
   - imagecodecs=2024.9.22=py313he8fa8db_1
@@ -78,6 +88,7 @@ dependencies:
   - iniconfig=2.1.0=py313haa95532_0
   - intel-openmp=2024.2.1=h57928b3_1083
   - ipykernel=6.29.5=pyh4bbf305_0
+  - ipyleaflet=0.20.0=pyhd8ed1ab_0
   - ipython=9.4.0=pyh6be1c34_0
   - ipython_pygments_lexers=1.1.1=pyhd8ed1ab_0
   - ipywidgets=8.1.7=pyhd8ed1ab_0
@@ -98,12 +109,14 @@ dependencies:
   - jupyter_console=6.6.3=pyhd8ed1ab_1
   - jupyter_core=5.8.1=pyh5737063_0
   - jupyter_events=0.12.0=pyh29332c3_0
+  - jupyter_leaflet=0.20.0=pyhd8ed1ab_0
   - jupyter_server=2.16.0=pyhe01879c_0
   - jupyter_server_terminals=0.5.3=pyhd8ed1ab_1
   - jupyterlab=4.4.5=pyhd8ed1ab_0
   - jupyterlab_pygments=0.3.0=pyhd8ed1ab_2
   - jupyterlab_server=2.27.3=pyhd8ed1ab_1
   - jupyterlab_widgets=3.0.15=pyhd8ed1ab_0
+  - kealib=1.5.0=h6c4040a_2
   - kiwisolver=1.4.8=py313hf069bd2_1
   - krb5=1.21.3=hdf4eb48_0
   - lark=1.2.2=pyhd8ed1ab_1
@@ -113,27 +126,36 @@ dependencies:
   - libavif=1.3.0=hf2698fe_0
   - libavif16=1.3.0=hf2698fe_0
   - libblas=3.9.0=32_h641d27c_mkl
+  - libboost=1.85.0=h9a677ad_2
+  - libboost-devel=1.85.0=h91493d7_2
+  - libboost-headers=1.85.0=h57928b3_2
   - libbrotlicommon=1.0.9=hcfcfb64_9
   - libbrotlidec=1.0.9=hcfcfb64_9
   - libbrotlienc=1.0.9=hcfcfb64_9
   - libcblas=3.9.0=32_h5e41251_mkl
   - libcurl=8.14.1=ha9f67de_0
   - libdeflate=1.22=h2466b09_0
+  - libexpat=2.7.1=hac47afa_0
   - libffi=3.4.4=hd77b12b_1
+  - libgdal=3.6.2=hdf1f3d4_10
   - libglib=2.84.2=h405b238_0
   - libhwloc=2.11.2=default_h88281d1_1002
   - libiconv=1.18=h135ad9c_1
+  - libkml=1.3.0=haf3e7a6_1018
   - liblapack=3.9.0=32_h1aa476e_mkl
   - libmpdec=4.0.0=h827c3e9_0
+  - libnetcdf=4.8.1=h99c5407_5
   - libpng=1.6.39=h8cc25b3_0
   - libpq=17.4=h4a159e6_1
   - libsodium=1.0.20=hc70643c_0
+  - libspatialite=5.1.0=h6715bb4_2
   - libsqlite=3.50.3=hf5d6505_0
   - libssh2=1.10.0=h9a1e1f7_2
   - libtiff=4.7.0=h404307b_0
   - libwebp-base=1.6.0=h4d5522a_0
   - libwinpthread=12.0.0.r4.gg4f2fc60ca=h57928b3_9
   - libxml2=2.13.8=h866ff63_0
+  - libzip=1.10.1=h1d365fa_3
   - libzlib=1.2.13=h2466b09_6
   - libzopfli=1.0.3=h0e60522_0
   - lz4-c=1.9.4=hcfcfb64_0
@@ -142,6 +164,7 @@ dependencies:
   - matplotlib=3.10.0=py313haa95532_1
   - matplotlib-base=3.10.0=py313h81b4f16_0
   - matplotlib-inline=0.1.7=pyhd8ed1ab_1
+  - minizip=4.0.6=hb638d1e_0
   - mistune=3.1.3=pyh29332c3_0
   - mkl=2024.2.2=h66d3029_15
   - munkres=1.1.4=pyhd8ed1ab_1
@@ -170,7 +193,9 @@ dependencies:
   - platformdirs=4.3.8=pyhe01879c_0
   - pluggy=1.5.0=pyhd8ed1ab_1
   - ply=3.11=pyhd8ed1ab_3
-  - proj=9.6.2=h4f671f6_0
+  - poppler=24.09.0=h1538a65_3
+  - poppler-data=0.4.12=hd8ed1ab_0
+  - proj=9.3.1=he13c7e8_0
   - prometheus_client=0.22.1=pyhd8ed1ab_0
   - prompt-toolkit=3.0.51=pyha770c72_0
   - prompt_toolkit=3.0.51=hd8ed1ab_0
@@ -180,7 +205,7 @@ dependencies:
   - pygments=2.19.1=py313haa95532_0
   - pyjwt=2.10.1=pyhd8ed1ab_0
   - pyparsing=3.2.3=pyhd8ed1ab_1
-  - pyproj=3.7.1=py313hc3e4018_1
+  - pyproj=3.6.1=py313h9783e57_1
   - pyqt=6.7.1=py313h5da7b33_1
   - pyqt6-sip=13.9.1=py313h827c3e9_1
   - pysocks=1.7.1=pyh09c184e_7
@@ -204,6 +229,7 @@ dependencies:
   - qttools=6.7.3=hcb596f7_1
   - qtwebchannel=6.7.3=h885b0b7_1
   - qtwebsockets=6.7.3=h885b0b7_1
+  - rasterio=1.4.3=py313he5c4563_0
   - rav1e=0.7.1=ha073cba_3
   - referencing=0.36.2=pyh29332c3_0
   - requests=2.32.4=pyhd8ed1ab_0
@@ -218,7 +244,7 @@ dependencies:
   - send2trash=1.8.3=pyh5737063_1
   - sentinelhub=3.11.1=pyhd8ed1ab_1
   - setuptools=78.1.1=py313haa95532_0
-  - shapely=2.1.1=py313h410098b_0
+  - shapely=2.0.6=py313hba19cfc_0
   - sip=6.10.0=py313h5813708_0
   - six=1.17.0=pyhe01879c_1
   - snappy=1.2.2=h7fa0ca8_0
@@ -231,6 +257,7 @@ dependencies:
   - terminado=0.18.1=pyh5737063_0
   - threadpoolctl=3.6.0=pyhecae5ae_0
   - tifffile=2024.12.12=pyhd8ed1ab_0
+  - tiledb=2.3.3=hd8964de_3
   - tinycss2=1.4.0=pyhd8ed1ab_0
   - tk=8.6.14=h5e9d12e_1
   - tomli=2.2.1=pyhd8ed1ab_1
@@ -238,6 +265,7 @@ dependencies:
   - tornado=6.5.1=py313ha7868ed_0
   - tqdm=4.67.1=pyhd8ed1ab_1
   - traitlets=5.14.3=pyhd8ed1ab_1
+  - traittypes=0.2.1=pyh9f0ad1d_2
   - trove-classifiers=2025.5.9.12=pyhd8ed1ab_0
   - types-python-dateutil=2.9.0.20250708=pyhd8ed1ab_0
   - typing-extensions=4.14.1=h4440ef1_0
@@ -247,6 +275,7 @@ dependencies:
   - tzdata=2025b=h04d1e81_0
   - ucrt=10.0.22621.0=h57928b3_1
   - uri-template=1.3.0=pyhd8ed1ab_1
+  - uriparser=0.9.8=h5a68840_0
   - urllib3=2.5.0=pyhd8ed1ab_0
   - utm=0.7.0=pyhd8ed1ab_0
   - vc=14.3=h2df5915_10
@@ -260,6 +289,8 @@ dependencies:
   - widgetsnbextension=4.0.14=pyhd8ed1ab_0
   - win_inet_pton=1.1.0=pyh7428d3b_8
   - winpty=0.4.3=4
+  - xerces-c=3.2.5=he0c23c2_2
+  - xyzservices=2025.4.0=pyhd8ed1ab_0
   - xz=5.6.4=h4754444_1
   - yaml=0.2.5=h8ffe710_2
   - zeromq=4.3.5=ha9f60a1_7
