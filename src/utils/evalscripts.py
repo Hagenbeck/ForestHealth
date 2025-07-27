@@ -1,3 +1,9 @@
+from dataclasses import dataclass
+from src.data_models import EvalScriptType
+@dataclass
+class RequestType():
+  evalscript: str
+  response: list
 
 rgb_evalscript = """
 //VERSION=3
@@ -15,6 +21,15 @@ function evaluatePixel(sample) {
   return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
 }
 """
+rgb_response = [
+                {
+                    'identifier': 'default',
+                    'format': {
+                        'type': 'image/jpeg',
+                    }
+                }
+              ]
+
 
 all_bands_evalscript = """
 //VERSION=3
@@ -39,6 +54,22 @@ function evaluatePixel(sample) {
           };
 }
 """
+
+all_bands_response = [
+                      {
+                          'identifier': 'bands',
+                          'format': {
+                              'type': 'image/tiff',
+                          }
+                      },
+                      {
+                          'identifier': 'scl',
+                          'format': {
+                              'type': 'image/tiff',
+                          }
+                      }
+                     ]
+
 
 indices_evalscript = """
 //VERSION=3
@@ -135,3 +166,35 @@ function evaluatePixel(samples) {
     };
 }
 """
+indices_response = [
+                      {
+                          'identifier': 'indices',
+                          'format': {
+                              'type': 'image/tiff',
+                          }
+                      },
+                      {
+                          'identifier': 'scl',
+                          'format': {
+                              'type': 'image/tiff',
+                          }
+                      }
+                     ]
+
+_requests = {
+  "RGB" : RequestType(rgb_evalscript, rgb_response),
+  "ALL" : RequestType(all_bands_evalscript, all_bands_response),
+  "INDICES": RequestType(indices_evalscript, indices_response)
+}
+
+def get_evalscript(mode: EvalScriptType) -> str:
+    try:
+        return _requests[mode].evalscript
+    except KeyError:
+        raise KeyError(f"{mode} is not a valid Evalscript Type. Valid types are: {list(_requests.keys())}")
+
+def get_response_setup(mode: EvalScriptType) -> list[dict]:
+    try:
+        return _requests[mode].response
+    except KeyError:
+        raise KeyError(f"{mode} is not a valid Evalscript Type. Valid types are: {list(_requests.keys())}")
