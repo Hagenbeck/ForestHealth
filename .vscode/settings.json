@@ -10,6 +10,7 @@
     "conventionalCommits.scopes": [
         "project",
         "DATA",
-        "utils"
+        "utils",
+        "pipeline"
     ]
 }
