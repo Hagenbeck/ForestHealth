@@ -8,6 +8,7 @@ from src.data_models import EvalScriptType
 from shapely.geometry import shape
 from shapely.ops import transform
 from pyproj import Transformer
+from requests_oauthlib import OAuth2Session
 
 def build_json_request(width_px: int, 
                        height_px: int, 
@@ -102,6 +103,29 @@ def build_json_request(width_px: int,
     
     return json_request
 
+def send_request(client_secret: str, 
+                 token_url: str, 
+                 oauth: OAuth2Session, 
+                 json_request: dict):
+
+    token = oauth.fetch_token(
+        token_url=token_url,
+        client_secret=client_secret,
+        include_client_id=True
+    )
+    
+    url_request = "https://sh.dataspace.copernicus.eu/api/v1/process"
+    headers_request = {
+        "Authorization": f"Bearer {token['access_token']}"
+        }
+
+    response = oauth.post(url_request, headers=headers_request, json=json_request)
+    
+    if response.status_code == 200:
+        return response
+    else:
+        raise ConnectionError(f"The request failed with status code {response.status_code}.\n{response}")
+    
 def get_tiling_bounds(geometry: dict, resolution: int = 20, dimension: int = 2500) -> np.ndarray:
     """
     Calculates the tiles needed to fetch data from the sentinelhub API at the highest resolution.
