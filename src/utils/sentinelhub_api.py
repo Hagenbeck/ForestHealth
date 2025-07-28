@@ -9,6 +9,7 @@ from shapely.geometry import shape
 from shapely.ops import transform
 from pyproj import Transformer
 from requests_oauthlib import OAuth2Session
+from requests import Response
 
 def build_json_request(width_px: int, 
                        height_px: int, 
@@ -106,8 +107,27 @@ def build_json_request(width_px: int,
 def send_request(client_secret: str, 
                  token_url: str, 
                  oauth: OAuth2Session, 
-                 json_request: dict):
+                 json_request: dict) -> Response:
+    """
+    Sends the request to the sentinel hub process API.
 
+    Parameters
+    ----------
+    client_secret : str
+        The secret to retrieve the access token
+    token_url : int
+        The url where the token should be retrieved
+    oauth: int
+        Tne OAuthSession to retrieve the token
+    json_request
+        The request in JSON format
+
+    Returns
+    -------
+    Response
+        Response of the sentinel hub process API
+    """
+    
     token = oauth.fetch_token(
         token_url=token_url,
         client_secret=client_secret,
