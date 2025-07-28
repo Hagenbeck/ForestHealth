@@ -1,9 +1,13 @@
 import src.config as conf
+import numpy as np
 
 from datetime import datetime
 from src.utils.date_helper import parse_date
 from src.utils.evalscripts import get_evalscript, get_response_setup
 from src.data_models import EvalScriptType
+from shapely.geometry import shape
+from shapely.ops import transform
+from pyproj import Transformer
 
 def build_json_request(width_px: int, 
                        height_px: int, 
@@ -67,3 +71,28 @@ def build_json_request(width_px: int,
     
     
     return json_request
+
+def get_tiling_bounds(geometry: dict, resolution: int = 20, dimension: int = 2500) -> np.ndarray:
+    geom = shape(geometry)
+    project = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True).transform
+    geom_m = transform(project, geom)
+
+    minx, miny, maxx, maxy = geom_m.bounds
+    width_m = maxx - minx
+    height_m = maxy - miny
+    
+    width_px = width_m / resolution
+    height_px = height_m / resolution
+
+    width_tiles = int(np.ceil(width_px / dimension))
+    height_tiles = int(np.ceil(height_px / dimension))
+
+    tiles = np.zeros(shape=(height_tiles+1, width_tiles+1, 2))
+
+    for i in range(height_tiles+1):
+        for j in range(width_tiles+1):
+            x = min(minx + j * dimension * resolution, maxx)
+            y = min(miny + i * dimension * resolution, maxy)
+            tiles[i, j] = [x, y]
+                
+    return tiles
