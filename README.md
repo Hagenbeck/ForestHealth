@@ -22,15 +22,15 @@ SENTINELHUB_CLIENT_SECRET=your-actual-secret
 This project is available for educational and demonstration purposes only.
 What you can do:
 
-✅ View and study the code
-✅ Run it locally for learning
-✅ Use it as inspiration for your own projects
+✅ View and study the code  
+✅ Run it locally for learning  
+✅ Use it as inspiration for your own projects  
 
 What you cannot do:
 
-❌ Copy or redistribute this code
-❌ Use it for commercial purposes
-❌ Modify and redistribute without permission
+❌ Copy or redistribute this code  
+❌ Use it for commercial purposes  
+❌ Modify and redistribute without permission  
 
 For any other use cases or questions, please contact: github@peer-schlieker.de
 
