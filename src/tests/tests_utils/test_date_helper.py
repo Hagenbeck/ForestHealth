@@ -20,3 +20,18 @@ def test_generate_monthly_interval():
     
     assert all(dr_start == expected_start)
     assert all(dr_end == expected_end)
+    
+def test_generate_monthly_interval_one():
+    start_date = datetime(2025, 7, 1)
+    end_date = datetime(2025, 7, 31)
+    
+    dr_start, dr_end = generate_monthly_interval(start_date=start_date, end_date=end_date)
+    
+    expected_start = DatetimeIndex(['2025-07-01'],
+              dtype='datetime64[ns]', freq='MS')
+    expected_end = DatetimeIndex(['2025-07-31'],
+              dtype='datetime64[ns]', freq='ME')
+
+    
+    assert all(dr_start == expected_start)
+    assert all(dr_end == expected_end)
