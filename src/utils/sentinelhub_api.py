@@ -1,15 +1,16 @@
+import time
 import src.config as conf
 import numpy as np
 
 from datetime import datetime
-from src.utils.date_helper import parse_date
 from src.utils.evalscripts import get_evalscript, get_response_setup
-from src.data_models import EvalScriptType
+from src.data_models import CRSType, EvalScriptType
 from shapely.geometry import shape
 from shapely.ops import transform
 from pyproj import Transformer
 from requests_oauthlib import OAuth2Session
-from requests import Response
+from requests import HTTPError, Response
+from requests.exceptions import RequestException
 
 def build_json_request(width_px: int, 
                        height_px: int, 
@@ -17,7 +18,8 @@ def build_json_request(width_px: int,
                        end_date: datetime, 
                        evalscript_type: EvalScriptType = "RGB", 
                        bbox: list[float] | None = None, 
-                       geometry: dict | None = None) -> dict:
+                       geometry: dict | None = None,
+                       crs: CRSType = "3857") -> dict:
     """
     Builds the JSON Request for a request to the sentinelhub API.
 
@@ -47,7 +49,7 @@ def build_json_request(width_px: int,
     if width_px > 2500:
         raise ValueError(f"The API allows for a maximum of 2500 pixels. {width_px} is too wide.")
     elif height_px > 2500:
-        raise ValueError(f"The API allows for a maximum of 2500 pixels. {width_px} is too high.")
+        raise ValueError(f"The API allows for a maximum of 2500 pixels. {height_px} is too high.")
     
     evalscript = get_evalscript(evalscript_type)
     responses = get_response_setup(evalscript_type)
@@ -61,21 +63,20 @@ def build_json_request(width_px: int,
             }
         }
     else:
-        processing_block = {}  # Default to SIMPLE
+        processing_block = {}
         data_filter = {
             'timeRange': {
                 'from': f'{start_date.strftime("%Y-%m-%d")}T00:00:00Z',
                 'to': f'{end_date.strftime("%Y-%m-%d")}T23:59:59Z'
             },
             'mosaickingOrder': 'leastCC',
-            'maxCloudCoverage': 20  # Optional but helpful
+            'maxCloudCoverage': 20
         }
     
     json_request = {
                     'input': {
                         'bounds': {
                             'properties': {
-                                'crs': 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
                             }
                         },
                         'data': [
@@ -94,13 +95,17 @@ def build_json_request(width_px: int,
                     'evalscript': evalscript
                 }
     
+    if crs == "3857":
+        json_request['input']["bounds"]["properties"]["crs"] = 'http://www.opengis.net/def/crs/EPSG/0/3857'
+    elif crs == "CRS84":
+        json_request['input']["bounds"]["properties"]["crs"] = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
+    
     if bbox is None and geometry is None:
         raise ValueError("Either 'bbox' or 'geometry' must be provided.")
     elif bbox is not None:
         json_request["input"]["bounds"]["bbox"] = bbox
     else:
         json_request["input"]["bounds"]["geometry"] = geometry
-    
     
     return json_request
 
@@ -115,11 +120,11 @@ def send_request(client_secret: str,
     ----------
     client_secret : str
         The secret to retrieve the access token
-    token_url : int
+    token_url : str
         The url where the token should be retrieved
-    oauth: int
-        Tne OAuthSession to retrieve the token
-    json_request
+    oauth: OAuth2Session
+        The OAuthSession to retrieve the token
+    json_request: dict
         The request in JSON format
 
     Returns
@@ -136,16 +141,100 @@ def send_request(client_secret: str,
     
     url_request = "https://sh.dataspace.copernicus.eu/api/v1/process"
     headers_request = {
-        "Authorization": f"Bearer {token['access_token']}"
-        }
+        "Authorization": f"Bearer {token['access_token']}",
+        "Content-Type": "application/json"
+    }
 
     response = oauth.post(url_request, headers=headers_request, json=json_request)
+
+    return response
+
+def safe_send_request(client_secret, token_url, oauth, json_request, max_retries=3):
+    """
+    Safely sends a request with retry logic for rate limits and server errors.
     
-    if response.status_code == 200:
-        return response
-    else:
-        raise ConnectionError(f"The request failed with status code {response.status_code}.\n{response}")
+    Parameters
+    ----------
+    client_secret : str
+        The secret to retrieve the access token
+    token_url : str
+        The url where the token should be retrieved  
+    oauth: OAuth2Session
+        The OAuthSession to retrieve the token
+    json_request: dict
+        The request in JSON format
+    max_retries: int
+        Maximum number of retry attempts
+        
+    Returns
+    -------
+    Response
+        Successful response from the API
+        
+    Raises
+    ------
+    HTTPError
+        If the request fails after all retries
+    RuntimeError
+        If maximum retries exceeded
+    """
+    retries = 0
     
+    while retries < max_retries:
+        try:
+            response = send_request(client_secret, token_url, oauth, json_request)
+            
+            if response.status_code == 200:
+                return response
+            elif response.status_code == 429:
+
+                retry_after_ms = response.headers.get("retry-after", "2000")
+                try:
+                    wait_time_ms = int(retry_after_ms)
+                    wait_time_sec = wait_time_ms / 1000.0
+                except (ValueError, TypeError):
+                    wait_time_sec = 2.0
+                
+                print(f"Rate limit hit (attempt {retries + 1}/{max_retries}). Waiting {wait_time_sec:.1f} seconds...")
+                
+                time.sleep(wait_time_sec)
+                retries += 1
+                
+            elif response.status_code in [500, 502, 503, 504]:
+                wait_time = min(2 ** retries, 16)
+                
+                print(f"Server error {response.status_code} (attempt {retries + 1}/{max_retries}). Waiting {wait_time} seconds...")
+                time.sleep(wait_time)
+                
+                retries += 1
+                
+            else:
+                error_msg = f"Request failed with status code {response.status_code}"
+                try:
+                    error_details = response.json()
+                    error_msg += f": {error_details}"
+                except:
+                    error_msg += f": {response.text}"
+                
+                raise HTTPError(error_msg, response=response)
+                
+        except RequestException as e:
+            if retries < max_retries - 1:
+                
+                wait_time = min(2 ** retries, 8)
+                print(f"Network error (attempt {retries + 1}/{max_retries}): {e}. Waiting {wait_time} seconds...")
+                
+                time.sleep(wait_time)
+                
+                retries += 1
+            else:
+                raise
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            raise
+    
+    raise RuntimeError(f"Failed after {max_retries} retries due to rate limits or server errors.")
+
 def get_tiling_bounds(geometry: dict, resolution: int = 20, dimension: int = 2500) -> np.ndarray:
     """
     Calculates the tiles needed to fetch data from the sentinelhub API at the highest resolution.
