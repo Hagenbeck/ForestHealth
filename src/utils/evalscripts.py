@@ -88,29 +88,48 @@ function setup() {
 }
 
 function getFirstQuartile(values) {
-  //get the first quartile of the values
+  try {
+    if (!values || values.length === 0) return 0;
     values.sort((a,b) => a-b);
     var index = Math.floor(values.length / 4);
-    return values[index];
+    return values[index] || 0;
+  } catch (e) {
+    return 0;
+  }
 }
 
 function validate(sample) {
-  //define invalid classificated pixels
-    const invalid = [
-        0, // NO_DATA
-        1, // SATURATED_DEFECTIVE
-        3, // CLOUD_SHADOW
-        7, // CLOUD_LOW_PROBA
-        8, // CLOUD_MEDIUM_PROBA
-        9, // CLOUD_HIGH_PROBA
-        10 // THIN_CIRRUS
-    ]
-    return !invalid.includes(sample.SCL)
+  try {
+    const invalid = [0, 1, 3, 7, 8, 9, 10];
+    return sample && sample.SCL !== undefined && !invalid.includes(sample.SCL);
+  } catch (e) {
+    return false;
+  }
+}
+
+function safeDiv(numerator, denominator, defaultValue = 0) {
+  if (denominator === 0 || denominator === undefined || denominator === null) {
+    return defaultValue;
+  }
+  let result = numerator / denominator;
+  if (isNaN(result) || !isFinite(result)) {
+    return defaultValue;
+  }
+  // Cap extreme values
+  return Math.max(-10, Math.min(10, result));
 }
 
 function evaluatePixel(samples) {
+  try {
+    if (!samples || samples.length === 0) {
+      return {
+        indices: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        scl: [0]
+      };
+    }
+
     var valid = samples.filter(validate);
-    if (valid.length > 0 ) {
+    if (valid.length > 0) {
         let cl = {
             b02: getFirstQuartile(valid.map(s => s.B02)),
             b03: getFirstQuartile(valid.map(s => s.B03)),
@@ -125,44 +144,38 @@ function evaluatePixel(samples) {
 
         let l = 0.5;
 
-        let saviDenom = cl.b08 + cl.b04 + l;
-        let savi = saviDenom !== 0 ? (((cl.b08 - cl.b04) / saviDenom) * (1 + l)) : 0;
+        // All calculations with safe division
+        let savi = safeDiv((cl.b08 - cl.b04) * (1 + l), cl.b08 + cl.b04 + l);
+        let evi = safeDiv(2.5 * (cl.b08 - cl.b04), cl.b08 + 6 * cl.b04 - 7.5 * cl.b02 + 1);
+        let ndre705 = safeDiv(cl.b08 - cl.b05, cl.b08 + cl.b05);
+        let ndre740 = safeDiv(cl.b08 - cl.b06, cl.b08 + cl.b06);
+        let ndre783 = safeDiv(cl.b08 - cl.b07, cl.b08 + cl.b07);
+        let ndvi = safeDiv(cl.b08 - cl.b04, cl.b08 + cl.b04);
+        let ndwigao = safeDiv(cl.b08 - cl.b11, cl.b08 + cl.b11);
+        let ndwimcf = safeDiv(cl.b03 - cl.b08, cl.b03 + cl.b08);
+        let nbr = safeDiv(cl.b08 - cl.b12, cl.b08 + cl.b12);
 
-        let eviDenom = cl.b08 + 6 * cl.b04 - 7.5 * cl.b02 + 1;
-        let evi = eviDenom !== 0 ? (2.5 * (cl.b08 - cl.b04) / eviDenom) : 0;
-
-        let ndre705Denom = cl.b08 + cl.b05;
-        let ndre705 = ndre705Denom !== 0 ? ((cl.b08 - cl.b05) / ndre705Denom) : 0;
-
-        let ndre740Denom = cl.b08 + cl.b06;
-        let ndre740 = ndre740Denom !== 0 ? ((cl.b08 - cl.b06) / ndre740Denom) : 0;
-
-        let ndre783Denom = cl.b08 + cl.b07;
-        let ndre783 = ndre783Denom !== 0 ? ((cl.b08 - cl.b07) / ndre783Denom) : 0;
-
-        let ndviDenom = cl.b08 + cl.b04;
-        let ndvi = ndviDenom !== 0 ? ((cl.b08 - cl.b04) / ndviDenom) : 0;
-
-        let ndwigaoDenom = cl.b08 + cl.b11;
-        let ndwigao = ndwigaoDenom !== 0 ? ((cl.b08 - cl.b11) / ndwigaoDenom) : 0;
-
-        let ndwimcfDenom = cl.b03 + cl.b08;
-        let ndwimcf = ndwimcfDenom !== 0 ? ((cl.b03 - cl.b08) / ndwimcfDenom) : 0;
-
-        let nbrDenom = cl.b08 + cl.b12;
-        let nbr = nbrDenom !== 0 ? ((cl.b08 - cl.b12) / nbrDenom) : 0;
+        // Ensure valid SCL value
+        let sclValue = samples[0] && samples[0].SCL !== undefined ? samples[0].SCL : 0;
+        sclValue = Math.max(0, Math.min(255, Math.floor(sclValue))); // Ensure valid UINT8
 
         return {
             indices: [savi, evi, ndre705, ndre740, ndre783, ndvi, ndwigao, ndwimcf, nbr],
-            scl: [samples[0].SCL]
+            scl: [sclValue]
         };
     }
 
-    // If there isn't enough data, return NODATA
     return {
-        indices: [NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN],
-        scl: [NaN]
+        indices: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        scl: [0]
     };
+  } catch (e) {
+    // Fallback in case of any unexpected error
+    return {
+        indices: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        scl: [0]
+    };
+  }
 }
 """
 indices_response = [

@@ -92,7 +92,7 @@ def request_and_stack_tiles(tiles: np.ndarray, geometry: dict, evalscript_type: 
     tile_data_grid = []
     bands = None
     
-    for i in range(height-1):
+    for i in range(height-2, -1, -1):
         row_tiles = []
         for j in range(width-1):
             bbox = get_bbox(i, j, tiles)
