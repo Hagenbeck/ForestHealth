@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from src.data_models import EvalScriptType
+from data_models import EvalScriptType
 @dataclass
 class RequestType():
   evalscript: str
