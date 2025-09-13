@@ -1,10 +1,10 @@
 import time
-import src.config as conf
+import config as conf
 import numpy as np
 
 from datetime import datetime
-from src.utils.evalscripts import get_evalscript, get_response_setup
-from src.data_models import CRSType, EvalScriptType
+from utils.evalscripts import get_evalscript, get_response_setup
+from data_models import CRSType, EvalScriptType
 from shapely.geometry import shape
 from shapely.ops import transform
 from pyproj import Transformer

@@ -1,4 +1,4 @@
-from src.utils.evalscripts import *
+from utils.evalscripts import *
 
 def test_get_evalscript():
     assert rgb_evalscript == get_evalscript("RGB")

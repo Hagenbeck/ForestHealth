@@ -9,11 +9,11 @@ from oauthlib.oauth2 import BackendApplicationClient
 from dotenv import load_dotenv
 from requests_oauthlib import OAuth2Session
 from rasterio.io import MemoryFile
-from src.data_models import EvalScriptType
-from src.utils.sentinelhub_api import get_tiling_bounds, build_json_request, safe_send_request
-from src.utils.paths import get_data_path
-from src.utils.date_helper import parse_date, generate_monthly_interval
-from src.utils.geometry import retrieve_geometry, get_bbox, get_pixels, bbox_intersects_geometry, transform_geometry_to_3857
+from data_models import EvalScriptType
+from utils.sentinelhub_api import get_tiling_bounds, build_json_request, safe_send_request
+from utils.paths import get_data_path
+from utils.date_helper import parse_date, generate_july_intervals
+from utils.geometry import retrieve_geometry, get_bbox, get_pixels, bbox_intersects_geometry, transform_geometry_to_3857
 
 def download_sentinel_data(geojson: str = "blackForestPoly.geojson", evalscript_type: EvalScriptType = "INDICES"):
     
@@ -25,7 +25,7 @@ def download_sentinel_data(geojson: str = "blackForestPoly.geojson", evalscript_
     start_date = parse_date(cf.START_DATE)
     end_date = parse_date(cf.END_DATE)
     
-    ms_date, me_date = generate_monthly_interval(start_date=start_date, end_date=end_date)
+    ms_date, me_date = generate_july_intervals(start_date=start_date, end_date=end_date)
 
     result = []
     for ind, start_interval in enumerate(ms_date):

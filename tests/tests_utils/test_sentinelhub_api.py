@@ -1,5 +1,5 @@
-from src.utils.paths import get_data_path
-from src.utils.sentinelhub_api import get_tiling_bounds
+from utils.paths import get_data_path
+from utils.sentinelhub_api import get_tiling_bounds
 import geojson
 import numpy as np
 

@@ -1,4 +1,4 @@
-from src.data_models import EvalScriptType
+from data_models import EvalScriptType
 
 # API Request
 EVALSCRIPT_TYPE: EvalScriptType  = "RGB"
