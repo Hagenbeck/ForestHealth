@@ -1,7 +1,7 @@
 import json
 import os
 import time
-import src.config as cf
+import config as cf
 import numpy as np
 
 from datetime import datetime
