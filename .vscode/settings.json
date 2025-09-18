@@ -11,6 +11,7 @@
         "project",
         "DATA",
         "utils",
-        "pipeline"
+        "pipeline",
+        "tests"
     ]
 }
