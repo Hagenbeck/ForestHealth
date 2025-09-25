@@ -1,6 +1,6 @@
 # Forest Health Classification
 
-This machine learning project classifies forest health using Copernicus Sentinel satellite data (2023-2025). The model analyzes multi-spectral satellite imagery to detect and classify forest conditions.
+This machine learning project classifies forest health using Copernicus Sentinel satellite data (2024-2025). The model analyzes multi-spectral satellite imagery to detect and classify forest conditions.
 
 **🌐 See the live results:** [https://www.peer-schlieker.de/]
 
@@ -45,7 +45,7 @@ The code in this project is available for educational and demonstration purposes
 For questions about code usage, contact: github@peer-schlieker.de
 
 **Data Attribution:**
-This project's results are based on modified Copernicus Sentinel data 2023-2025. 
+This project's results are based on modified Copernicus Sentinel data 2024-2025. 
 The original Copernicus Sentinel data is freely available under EU law (Regulation EU No 377/2014) 
 for reproduction, distribution, communication to the public, and adaptation.
 

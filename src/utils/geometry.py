@@ -5,8 +5,9 @@ from shapely.geometry import shape, box
 from sentinelhub import BBox
 from shapely.ops import transform
 from pyproj import Transformer
+from shapely.geometry.base import BaseGeometry
 
-def bbox_intersects_geometry(bbox: BBox, geometry_dict: dict=None, geometry_3857=None) -> bool:
+def bbox_intersects_geometry(bbox: BBox, geometry_dict: dict = None, geometry_3857: BaseGeometry = None) -> bool:
     """
     Check if a bbox intersects with a geometry, handling CRS transformations.
     
@@ -24,20 +25,17 @@ def bbox_intersects_geometry(bbox: BBox, geometry_dict: dict=None, geometry_3857
     bool
         True if bbox intersects geometry, False otherwise
     """
-    # Create bbox geometry in Web Mercator
     bbox_geom = box(*bbox)
     
     if geometry_3857 is None:
-        # Create geometry from dict (assumed to be in EPSG:4326)
         geom_4326 = shape(geometry_dict)
         
-        # Transform geometry from EPSG:4326 to EPSG:3857 to match bbox CRS
         transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
         geometry_3857 = transform(transformer.transform, geom_4326)
     
     return bbox_geom.intersects(geometry_3857)
 
-def transform_geometry_to_3857(geometry_dict: dict):
+def transform_geometry_to_3857(geometry_dict: dict) -> BaseGeometry:
     """
     Transform a geometry from EPSG:4326 to EPSG:3857.
     Use this to pre-transform geometry for better performance.
@@ -46,16 +44,35 @@ def transform_geometry_to_3857(geometry_dict: dict):
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
     return transform(transformer.transform, geom_4326)
 
-def retrieve_geometry(geojson_path) -> dict:
+def retrieve_geometry(geojson_path: str) -> dict:
+    """
+    Retrieve the geometry from a geojson file
+
+    Args:
+        geojson_path (str): Path to the .geojson
+
+    Returns:
+        dict: geometry of geojson
+    """
     with open(geojson_path) as f:
         geo_file = geojson.load(f)
         
     return geo_file['features'][0]['geometry']
 
-def get_bbox(i: int, j: int , tiles: np.ndarray) -> BBox:
-    
-    tile_coords = np.array([[tiles[i, j], tiles[i, j+1]], 
-                       [tiles[i+1, j], tiles[i+1, j+1]]])
+def get_bbox(y: int, x: int , tiles: np.ndarray) -> BBox:
+    """
+    Calculates the bounding box for a tile of a split request
+
+    Args:
+        y (int): y index of tiles
+        x (int): x index of tiles
+        tiles (np.ndarray): array with coords of boundaries
+
+    Returns:
+        BBox: _description_
+    """
+    tile_coords = np.array([[tiles[y, x], tiles[y, x+1]], 
+                       [tiles[y+1, x], tiles[y+1, x+1]]])
     
     flat_coords = tile_coords.reshape(-1, 2)
     xs = flat_coords[:, 0]
@@ -64,6 +81,16 @@ def get_bbox(i: int, j: int , tiles: np.ndarray) -> BBox:
     return BBox(bbox=[xs.min(), ys.min(), xs.max(), ys.max()], crs=CRS.POP_WEB)
     
 def get_pixels(bbox: BBox, resolution: int = 20) -> tuple[int, int]:
+    """
+    Calculate the width and height of a bbox in pixels
+
+    Args:
+        bbox (BBox): bounding Box
+        resolution (int, optional): resolution in meters. Defaults to 20.
+
+    Returns:
+        tuple[int, int]: width, height of bbox in pixels
+    """
 
     width_m = bbox.max_x - bbox.min_x
     height_m = bbox.max_y - bbox.min_y
