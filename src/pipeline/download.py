@@ -1,6 +1,8 @@
 import json
 import os
 import time
+
+from requests import Response
 import config as cf
 import numpy as np
 
@@ -15,7 +17,17 @@ from utils.paths import get_data_path
 from utils.date_helper import parse_date, generate_july_intervals
 from utils.geometry import retrieve_geometry, get_bbox, get_pixels, bbox_intersects_geometry, transform_geometry_to_3857
 
-def download_sentinel_data(geojson: str = "blackForestPoly.geojson", evalscript_type: EvalScriptType = "INDICES"):
+def download_sentinel_data(geojson: str = "blackForestPoly.geojson", evalscript_type: EvalScriptType = "INDICES") -> np.array:
+    """
+    Download the sentinel data for a given geojson with specified evalscripts
+
+    Args:
+        geojson (str, optional): Path to geojson file with AOI boundaries. Defaults to "blackForestPoly.geojson".
+        evalscript_type (EvalScriptType, optional): Type of request, influences evalscripts. Defaults to "INDICES".
+
+    Returns:
+        np.array: array with sentinel data for specified AOI
+    """
     
     geojson_path = get_data_path(geojson)
     geometry = retrieve_geometry(geojson_path)
@@ -35,6 +47,15 @@ def download_sentinel_data(geojson: str = "blackForestPoly.geojson", evalscript_
     return np.array(result)
     
 def retrieve_secrets() -> tuple[OAuth2Session, str, str]:
+    """
+    Load and initialize os environment variables
+
+    Raises:
+        EnvironmentError: if the sentinelhub credentials are not specified
+
+    Returns:
+        tuple[OAuth2Session, str, str]: returns the OAuth Session, the secret and token_url
+    """
     load_dotenv()
     
     client_id = os.getenv('SENTINELHUB_CLIENT_ID')
@@ -49,9 +70,15 @@ def retrieve_secrets() -> tuple[OAuth2Session, str, str]:
     
     return oauth, client_secret, token_url
     
-def validate_response_content(response):
+def validate_response_content(response: Response) -> bool:
     """
-    Validate that the response contains valid image data
+    Validating the reponse to contain a valid image
+
+    Args:
+        response (Response): response of the sentinelhub-api
+
+    Returns:
+        bool: True if the response likely contains a valid image
     """
     print(f"Response status: {response.status_code}")
     print(f"Response headers: {dict(response.headers)}")
@@ -68,20 +95,27 @@ def validate_response_content(response):
             pass
     
     # Check if content is too small to be a valid image
-    if len(response.content) < 1000:  # Less than 1KB is suspicious
+    if len(response.content) < 1000:
         print(f"Response content is very small ({len(response.content)} bytes)")
         print(f"First 200 bytes: {response.content[:200]}")
         return False
     
-    # Check for common error patterns in the content
-    content_start = response.content[:100].decode('utf-8', errors='ignore').lower()
-    if any(error_word in content_start for error_word in ['error', 'exception', 'invalid', 'bad request']):
-        print(f"Response content appears to contain an error message: {content_start}")
-        return False
-    
     return True
 
-def request_and_stack_tiles(tiles: np.ndarray, geometry: dict, evalscript_type: EvalScriptType, start_date: datetime, end_date: datetime):
+def request_and_stack_tiles(tiles: np.ndarray, geometry: dict, evalscript_type: EvalScriptType, start_date: datetime, end_date: datetime) -> np.array:
+    """
+    Requesting and tiling all the tiles for a given time period in a given AOI
+
+    Args:
+        tiles (np.ndarray): Tiled bounds of AOI
+        geometry (dict): geometry as bounds
+        evalscript_type (EvalScriptType): evalscript Type to specify the Javascript Section
+        start_date (datetime): start date of consideration interval
+        end_date (datetime): end date of consideration interval
+
+    Returns:
+        np.array: sentinel data of AOI for the specified time period
+    """
     
     oauth, client_secret, token_url = retrieve_secrets()
     

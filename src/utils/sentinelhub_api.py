@@ -149,7 +149,7 @@ def send_request(client_secret: str,
 
     return response
 
-def safe_send_request(client_secret, token_url, oauth, json_request, max_retries=3):
+def safe_send_request(client_secret, token_url, oauth, json_request, max_retries=3) -> Response:
     """
     Safely sends a request with retry logic for rate limits and server errors.
     
