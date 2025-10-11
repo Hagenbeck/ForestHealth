@@ -10,18 +10,18 @@ from rasterio.io import MemoryFile
 from requests import Response
 from requests_oauthlib import OAuth2Session
 
-import config as cf
-from data_models import EvalScriptType
-from utils.date_helper import generate_july_intervals, parse_date
-from utils.geometry import (
+import core.config as cf
+from core.date_utils import generate_july_intervals, parse_date
+from core.geometry import (
     bbox_intersects_geometry,
     get_bbox,
     get_pixels,
     retrieve_geometry,
     transform_geometry_to_3857,
 )
-from utils.paths import get_data_path
-from utils.sentinelhub_api import (
+from core.paths import get_data_path
+from data_sourcing.data_models import EvalScriptType
+from data_sourcing.sentinelhub_api import (
     build_json_request,
     get_tiling_bounds,
     safe_send_request,

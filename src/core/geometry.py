@@ -12,8 +12,8 @@ from shapely.geometry import box, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from data_models import CRSType
-from utils.paths import get_data_path
+from core.paths import get_data_path
+from data_sourcing.data_models import CRSType
 
 
 def bbox_intersects_geometry(

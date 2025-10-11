@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from data_models import EvalScriptType
+from data_sourcing.data_models import EvalScriptType
 
 
 @dataclass
