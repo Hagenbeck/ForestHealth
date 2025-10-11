@@ -9,9 +9,9 @@ from requests_oauthlib import OAuth2Session
 from shapely.geometry import shape
 from shapely.ops import transform
 
-import config as conf
-from data_models import CRSType, EvalScriptType
-from utils.evalscripts import get_evalscript, get_response_setup
+import core.config as conf
+from data_sourcing.data_models import CRSType, EvalScriptType
+from data_sourcing.evalscripts import get_evalscript, get_response_setup
 
 
 def build_json_request(
