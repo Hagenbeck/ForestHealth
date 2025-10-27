@@ -17,7 +17,10 @@ from data_sourcing.data_models import CRSType
 
 
 def bbox_intersects_geometry(
-    bbox: BBox, geometry_dict: dict = None, geometry_3857: BaseGeometry = None
+    bbox: BBox,
+    geometry_dict: dict = None,
+    geometry_3857: BaseGeometry = None,
+    crs: CRSType = "EPSG:4326",
 ) -> bool:
     """
     Check if a bbox intersects with a geometry, handling CRS transformations.
@@ -41,19 +44,21 @@ def bbox_intersects_geometry(
     if geometry_3857 is None:
         geom_4326 = shape(geometry_dict)
 
-        transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+        transformer = Transformer.from_crs(crs, "EPSG:3857", always_xy=True)
         geometry_3857 = transform(transformer.transform, geom_4326)
 
     return bbox_geom.intersects(geometry_3857)
 
 
-def transform_geometry_to_3857(geometry_dict: dict) -> BaseGeometry:
+def transform_geometry_to_3857(
+    geometry_dict: dict, original_crs: CRSType = "EPSG:4326"
+) -> BaseGeometry:
     """
     Transform a geometry from EPSG:4326 to EPSG:3857.
     Use this to pre-transform geometry for better performance.
     """
     geom_4326 = shape(geometry_dict)
-    transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+    transformer = Transformer.from_crs(original_crs, "EPSG:3857", always_xy=True)
     return transform(transformer.transform, geom_4326)
 
 
@@ -196,16 +201,16 @@ def get_slicing_for_subarray(
         tuple[int, int, int, int]: min_col, max_col, min_row, max_row of slicing
     """
     data_path_to_aoi = get_data_path(path_to_aoi)
-    geometry = retrieve_geometry(data_path_to_aoi)
-    geometry_3857 = transform_geometry_to_3857(geometry)
+    geometry_aoi = retrieve_geometry(data_path_to_aoi)
+    geometry_aoi_3857 = transform_geometry_to_3857(geometry_aoi)
 
     data_path_to_labels = get_data_path(path_to_labels)
-    gdf = gpd.read_file(data_path_to_labels)
+    gdf_labels = gpd.read_file(data_path_to_labels)
 
-    gdf_3857 = set_geopandas_crs_to_epsg_3857(gdf, crs_of_labels)
+    gdf_labels_3857 = set_geopandas_crs_to_epsg_3857(gdf_labels, crs_of_labels)
 
-    minx_aoi, miny_aoi, maxx_aoi, maxy_aoi = geometry_3857.bounds
-    minx_labels, miny_labels, maxx_labels, maxy_labels = gdf_3857.total_bounds
+    minx_aoi, miny_aoi, maxx_aoi, maxy_aoi = geometry_aoi_3857.bounds
+    minx_labels, miny_labels, maxx_labels, maxy_labels = gdf_labels_3857.total_bounds
 
     pixel_size = 20
 

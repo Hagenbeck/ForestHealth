@@ -249,7 +249,10 @@ def safe_send_request(
 
 
 def get_tiling_bounds(
-    geometry: dict, resolution: int = 20, dimension: int = 2500
+    geometry: dict,
+    resolution: int = 20,
+    dimension: int = 2500,
+    crs: CRSType = "EPSG:4326",
 ) -> np.ndarray:
     """
     Calculates the tiles needed to fetch data from the sentinelhub API at the highest resolution.
@@ -270,7 +273,7 @@ def get_tiling_bounds(
     """
 
     geom = shape(geometry)
-    project = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True).transform
+    project = Transformer.from_crs(crs, "EPSG:3857", always_xy=True).transform
     geom_m = transform(project, geom)
 
     minx, miny, maxx, maxy = geom_m.bounds

@@ -11,7 +11,7 @@ from requests import Response
 from requests_oauthlib import OAuth2Session
 
 import core.config as cf
-from core.date_utils import generate_july_intervals, parse_date
+from core.date_utils import generate_monthly_interval, parse_date
 from core.geometry import (
     bbox_intersects_geometry,
     get_bbox,
@@ -20,7 +20,7 @@ from core.geometry import (
     transform_geometry_to_3857,
 )
 from core.paths import get_data_path
-from data_sourcing.data_models import EvalScriptType
+from data_sourcing.data_models import CRSType, EvalScriptType
 from data_sourcing.sentinelhub_api import (
     build_json_request,
     get_tiling_bounds,
@@ -29,14 +29,15 @@ from data_sourcing.sentinelhub_api import (
 
 
 def download_sentinel_data(
-    geojson: str = "blackForestPoly.geojson",
+    geojson: str = "aoi_hornisgrinde.geojson",
     evalscript_type: EvalScriptType = "INDICES",
+    crs_type: CRSType = "EPSG:4326",
 ) -> np.array:
     """
     Download the sentinel data for a given geojson with specified evalscripts
 
     Args:
-        geojson (str, optional): Path to geojson file with AOI boundaries. Defaults to "blackForestPoly.geojson".
+        geojson (str, optional): Path to geojson file with AOI boundaries. Defaults to "aoi_hornisgrinde.geojson".
         evalscript_type (EvalScriptType, optional): Type of request, influences evalscripts. Defaults to "INDICES".
 
     Returns:
@@ -46,12 +47,14 @@ def download_sentinel_data(
     geojson_path = get_data_path(geojson)
     geometry = retrieve_geometry(geojson_path)
 
-    tiles = get_tiling_bounds(geometry=geometry)
+    tiles = get_tiling_bounds(geometry=geometry, crs=crs_type)
 
     start_date = parse_date(cf.START_DATE)
     end_date = parse_date(cf.END_DATE)
 
-    ms_date, me_date = generate_july_intervals(start_date=start_date, end_date=end_date)
+    ms_date, me_date = generate_monthly_interval(
+        start_date=start_date, end_date=end_date
+    )
 
     result = []
     for ind, start_interval in enumerate(ms_date):
@@ -61,6 +64,7 @@ def download_sentinel_data(
             evalscript_type=evalscript_type,
             start_date=start_interval,
             end_date=me_date[ind],
+            crs=crs_type,
         )
         result.append(data)
 
@@ -136,6 +140,7 @@ def request_and_stack_tiles(
     evalscript_type: EvalScriptType,
     start_date: datetime,
     end_date: datetime,
+    crs: CRSType,
 ) -> np.array:
     """
     Requesting and tiling all the tiles for a given time period in a given AOI
@@ -155,7 +160,7 @@ def request_and_stack_tiles(
 
     height, width, coords = np.shape(tiles)
 
-    geometry_3857 = transform_geometry_to_3857(geometry)
+    geometry_3857 = transform_geometry_to_3857(geometry, crs=crs)
 
     tile_data_grid = []
     bands = None
@@ -166,7 +171,7 @@ def request_and_stack_tiles(
             bbox = get_bbox(i, j, tiles)
             width_px, height_px = get_pixels(bbox)
 
-            if not bbox_intersects_geometry(bbox, geometry_3857=geometry_3857):
+            if not bbox_intersects_geometry(bbox, geometry_3857=geometry_3857, crs=crs):
                 row_tiles.append(
                     {"data": None, "width_px": width_px, "height_px": height_px}
                 )
