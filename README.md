@@ -45,11 +45,14 @@ The code in this project is available for educational and demonstration purposes
 For questions about code usage, contact: github@peer-schlieker.de
 
 **Data Attribution:**
-This project's results are based on modified Copernicus Sentinel data 2024-2025. 
+This project's results are based on modified Copernicus Sentinel data 2020-2025. 
 The original Copernicus Sentinel data is freely available under EU law (Regulation EU No 377/2014) 
 for reproduction, distribution, communication to the public, and adaptation.
 
 Original data source: Copernicus Open Access Hub / Copernicus API
+
+This project includes ESA Worldcover data.
+© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium
 
 **Acknowledgments**
 This project uses several open-source libraries. See environment.yml for the full list.
