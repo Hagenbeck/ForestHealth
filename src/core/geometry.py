@@ -1,18 +1,11 @@
-import math
-
 import geojson
-import geopandas as gpd
 import numpy as np
-from affine import Affine
 from pyproj import Transformer
-from rasterio.features import rasterize
-from rasterio.transform import from_origin
 from sentinelhub import CRS, BBox
 from shapely.geometry import box, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
-from core.paths import get_data_path
 from data_sourcing.data_models import CRSType
 
 
@@ -120,106 +113,3 @@ def get_pixels(bbox: BBox, resolution: int = 20) -> tuple[int, int]:
     height_px = int(height_m / resolution)
 
     return width_px, height_px
-
-
-def set_geopandas_crs_to_epsg_3857(
-    gdf: gpd.GeoDataFrame, crs_of_file: CRSType = "EPSG:3857"
-) -> gpd.GeoDataFrame:
-    """
-    This method transforms a GeoDataFrame safely to a CRS referenced Dataframe
-
-    Args:
-        gdf (gpd.GeoDataFrame): the GeoDataFrame to be transformed
-        crs_of_file (_type_, optional): the original crs of the GeoDataFrame. Defaults to "EPSG:3857".
-
-    Returns:
-        gpd.GeoDataFrame: transformed GeoDataFrame
-    """
-    if gdf.crs is None:
-        gdf = gdf.set_crs(crs_of_file)
-
-    if gdf.crs.to_string() != "EPSG:3857":
-        gdf = gdf.to_crs("EPSG:3857")
-
-    return gdf
-
-
-def load_mask_from_geojson(
-    path: str, crs_of_file: CRSType = "EPSG:3857"
-) -> tuple[np.array, Affine]:
-    """
-    This function generates a mask based on the polygon labels of a geojson
-
-    Args:
-        path (str): Path to geojson
-        crs_of_file (CRSType, optional): Coordinate Reference System of the geojson. Defaults to "EPSG:3857".
-
-    Returns:
-        np.array: mask of the polygon labels
-        Affine: transform that defines the bounds of the mask
-    """
-    gdf = gpd.read_file(path)
-
-    gdf_3857 = set_geopandas_crs_to_epsg_3857(gdf, crs_of_file)
-
-    minx, miny, maxx, maxy = gdf_3857.total_bounds
-
-    pixel_size = 20
-
-    width = int((maxx - minx) / pixel_size)
-    height = int((maxy - miny) / pixel_size)
-
-    transform = from_origin(minx, maxy, pixel_size, pixel_size)
-
-    mask = rasterize(
-        [(geom, 1) for geom in gdf_3857.geometry],
-        out_shape=(height, width),
-        transform=transform,
-        fill=0,
-        dtype=np.uint8,
-    )
-
-    return mask, transform
-
-
-def get_slicing_for_subarray(
-    path_to_labels: str = "forest_labels.geojson",
-    path_to_aoi: str = "blackForestPoly.geojson",
-    pixel_size: int = 20,
-    crs_of_labels: CRSType = "EPSG:3857",
-) -> tuple[int, int, int, int]:
-    """
-    Returns the slicing that represents the pixels of the labels area in the complete AOI
-
-    Args:
-        path_to_labels (str, optional): Path of the labels file. Defaults to "forest_labels.geojson".
-        path_to_aoi (str, optional): Path of the file for the AOI. Defaults to "blackForestPoly.geojson".
-        pixel_size (int, optional): Pixel size of data. Defaults to 20.
-        crs_of_labels (_type_, optional): Coordinate Reference System of labels. Defaults to "EPSG:3857".
-
-    Returns:
-        tuple[int, int, int, int]: min_col, max_col, min_row, max_row of slicing
-    """
-    data_path_to_aoi = get_data_path(path_to_aoi)
-    geometry_aoi = retrieve_geometry(data_path_to_aoi)
-    geometry_aoi_3857 = transform_geometry_to_3857(geometry_aoi)
-
-    data_path_to_labels = get_data_path(path_to_labels)
-    gdf_labels = gpd.read_file(data_path_to_labels)
-
-    gdf_labels_3857 = set_geopandas_crs_to_epsg_3857(gdf_labels, crs_of_labels)
-
-    minx_aoi, miny_aoi, maxx_aoi, maxy_aoi = geometry_aoi_3857.bounds
-    minx_labels, miny_labels, maxx_labels, maxy_labels = gdf_labels_3857.total_bounds
-
-    pixel_size = 20
-
-    width = int((maxx_labels - minx_labels) / pixel_size)
-    height = int((maxy_labels - miny_labels) / pixel_size)
-
-    min_col = math.ceil((minx_labels - minx_aoi) / 20)
-    max_col = math.ceil((minx_labels - minx_aoi) / 20 + width)
-    min_row = math.ceil((maxy_aoi - maxy_labels) / 20)
-    max_row = math.ceil((maxy_aoi - maxy_labels) / 20 + height)
-
-    return min_col, max_col, min_row, max_row
