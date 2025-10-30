@@ -8,11 +8,12 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "conventionalCommits.scopes": [
-        "project",
-        "DATA",
-        "utils",
-        "pipeline",
-        "tests"
+      "project",
+      "DATA",
+      "utils",
+      "pipeline",
+      "tests",
+      "core"
     ],
     "[python]": {
     "editor.tabSize": 4,
