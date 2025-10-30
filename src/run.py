@@ -1,8 +1,7 @@
 import numpy as np
 
-from pipeline.download import download_sentinel_data
-from pipeline.train_classifier import train_forest_classificator
+from pipeline.download import DownloadPipeline
 
-data = download_sentinel_data()
+data = DownloadPipeline().run()
 
 np.save("download.npy", data)

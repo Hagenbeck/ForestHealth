@@ -1,115 +1,68 @@
-import geojson
 import numpy as np
-from pyproj import Transformer
-from sentinelhub import CRS, BBox
-from shapely.geometry import box, shape
-from shapely.geometry.base import BaseGeometry
-from shapely.ops import transform
+import rasterio
+from sentinelhub import BBox
 
-from data_sourcing.data_models import CRSType
+from core.paths import get_data_path
 
 
-def bbox_intersects_geometry(
-    bbox: BBox,
-    geometry_dict: dict = None,
-    geometry_3857: BaseGeometry = None,
-    crs: CRSType = "EPSG:4326",
-) -> bool:
-    """
-    Check if a bbox intersects with a geometry, handling CRS transformations.
-
-    Parameters:
-    -----------
-    bbox : BBox
-        BBox object in Web Mercator (EPSG:3857)
-    geometry_dict : dict
-        Geometry dictionary from GeoJSON (assumed to be in EPSG:4326)
-    geometry_3857 : shapely.geometry, optional
-        Pre-transformed geometry in EPSG:3857 for performance
-
-    Returns:
-    --------
-    bool
-        True if bbox intersects geometry, False otherwise
-    """
-    bbox_geom = box(*bbox)
-
-    if geometry_3857 is None:
-        geom_4326 = shape(geometry_dict)
-
-        transformer = Transformer.from_crs(crs, "EPSG:3857", always_xy=True)
-        geometry_3857 = transform(transformer.transform, geom_4326)
-
-    return bbox_geom.intersects(geometry_3857)
-
-
-def transform_geometry_to_3857(
-    geometry_dict: dict, original_crs: CRSType = "EPSG:4326"
-) -> BaseGeometry:
-    """
-    Transform a geometry from EPSG:4326 to EPSG:3857.
-    Use this to pre-transform geometry for better performance.
-    """
-    geom_4326 = shape(geometry_dict)
-    transformer = Transformer.from_crs(original_crs, "EPSG:3857", always_xy=True)
-    return transform(transformer.transform, geom_4326)
-
-
-def retrieve_geometry(geojson_path: str) -> dict:
-    """
-    Retrieve the geometry from a geojson file
+def load_raster_layer(raster_file: str) -> rasterio.io.DatasetReader:
+    """Load a raster file in tiff format with rasterio
 
     Args:
-        geojson_path (str): Path to the .geojson
+        raster_file (str): file name of tiff File
 
     Returns:
-        dict: geometry of geojson
+        rasterio.io.DatasetReader: rasterio DatasetReader Object of the specified tiff
     """
-    with open(geojson_path) as f:
-        geo_file = geojson.load(f)
+    path_to_raster_file = get_data_path(raster_file)
 
-    return geo_file["features"][0]["geometry"]
+    dataset = rasterio.open(path_to_raster_file, mode="r")
+
+    return dataset
 
 
-def get_bbox(y: int, x: int, tiles: np.ndarray) -> BBox:
-    """
-    Calculates the bounding box for a tile of a split request
+def get_subsection_of_raster_layer(
+    aoi_bbox: BBox, aoi_crs: str, raster_layer: rasterio.io.DatasetReader
+) -> np.ndarray:
+    """Get the subsection of a raster_layer for a specified AOI
 
     Args:
-        y (int): y index of tiles
-        x (int): x index of tiles
-        tiles (np.ndarray): array with coords of boundaries
+        aoi_bbox (BBox): Bounding Box of AOI
+        aoi_crs (str): CRS of aoi_bbox (e.g., "EPSG:3857")
+        raster_layer (rasterio.io.DatasetReader): raster layer
 
     Returns:
-        BBox: _description_
+        np.ndarray: extracted subsection fitting to bbox of AOI
     """
-    tile_coords = np.array(
-        [[tiles[y, x], tiles[y, x + 1]], [tiles[y + 1, x], tiles[y + 1, x + 1]]]
+    from rasterio.warp import transform_bounds
+
+    raster_crs = raster_layer.crs.to_string()
+    if aoi_crs != raster_crs:
+        transformed_bounds = transform_bounds(
+            aoi_crs,
+            raster_crs,
+            aoi_bbox.min_x,
+            aoi_bbox.min_y,
+            aoi_bbox.max_x,
+            aoi_bbox.max_y,
+        )
+    else:
+        transformed_bounds = (
+            aoi_bbox.min_x,
+            aoi_bbox.min_y,
+            aoi_bbox.max_x,
+            aoi_bbox.max_y,
+        )
+
+    row_upper, col_left = raster_layer.index(
+        transformed_bounds[0], transformed_bounds[3]
+    )
+    row_lower, col_right = raster_layer.index(
+        transformed_bounds[2], transformed_bounds[1]
     )
 
-    flat_coords = tile_coords.reshape(-1, 2)
-    xs = flat_coords[:, 0]
-    ys = flat_coords[:, 1]
+    row_min, row_max = min(row_upper, row_lower), max(row_upper, row_lower)
+    col_min, col_max = min(col_left, col_right), max(col_left, col_right)
 
-    return BBox(bbox=[xs.min(), ys.min(), xs.max(), ys.max()], crs=CRS.POP_WEB)
-
-
-def get_pixels(bbox: BBox, resolution: int = 20) -> tuple[int, int]:
-    """
-    Calculate the width and height of a bbox in pixels
-
-    Args:
-        bbox (BBox): bounding Box
-        resolution (int, optional): resolution in meters. Defaults to 20.
-
-    Returns:
-        tuple[int, int]: width, height of bbox in pixels
-    """
-
-    width_m = bbox.max_x - bbox.min_x
-    height_m = bbox.max_y - bbox.min_y
-
-    width_px = int(width_m / resolution)
-    height_px = int(height_m / resolution)
-
-    return width_px, height_px
+    data = raster_layer.read(1)
+    return data[row_min:row_max, col_min:col_max]
