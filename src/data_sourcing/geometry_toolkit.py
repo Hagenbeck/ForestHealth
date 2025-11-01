@@ -7,6 +7,7 @@ from shapely.geometry import box, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
+import config as cf
 from core.paths import get_data_path
 from data_sourcing.data_models import CRSType
 
@@ -23,7 +24,7 @@ class GeometryToolkit:
         self,
         aoi_file: str,
         aoi_crs: CRSType,
-        resolution: int = 20,
+        resolution: int = cf.RESOLUTION,
         max_dimension: int = 2500,
     ):
         self.resolution = resolution
@@ -37,7 +38,8 @@ class GeometryToolkit:
         self._geometry_3857: BaseGeometry | None = None
         self.get_tiling_bounds()
 
-    def retrieve_geometry(self, geojson_path: str) -> dict:
+    @staticmethod
+    def retrieve_geometry(geojson_path: str) -> dict:
         """
         Retrieve the geometry from a geojson file
 

@@ -10,7 +10,8 @@
     "conventionalCommits.scopes": [
       "project",
       "DATA",
-      "utils",
+      "data_sourcing",
+      "data_processing",
       "pipeline",
       "tests",
       "core"
