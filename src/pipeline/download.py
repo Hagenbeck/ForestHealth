@@ -9,6 +9,7 @@ from requests import Response
 
 import config as cf
 from core.date_utils import generate_monthly_interval, parse_date
+from core.paths import get_data_path
 from data_sourcing.data_models import EvalScriptType
 from data_sourcing.geometry_toolkit import GeometryToolkit
 from data_sourcing.sentinelhub_api import SentinelHubAPI
@@ -50,6 +51,7 @@ class DownloadPipeline:
             )
             result.append(data)
 
+        np.save(get_data_path(cf.OBSERVATION_SAVE_FILE), result)
         return np.array(result)
 
     @staticmethod
