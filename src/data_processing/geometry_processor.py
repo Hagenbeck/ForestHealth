@@ -1,15 +1,11 @@
-import math
-
 import numpy as np
 import rasterio
-from pyproj import Transformer
+from rasterio.transform import Affine, from_bounds
 from rasterio.warp import (
     Resampling,
-    calculate_default_transform,
     reproject,
     transform_bounds,
 )
-from rasterio.windows import from_bounds
 from sentinelhub import BBox
 
 import config as cf
@@ -88,56 +84,35 @@ class GeometryProcessor:
 
         return BBox((minx, miny, maxx, maxy), crs=bbox_crs)
 
-    def retrieve_worldcover_raster_for_aoi(self):
+    def retrieve_worldcover_raster_for_aoi(self) -> tuple[np.ndarray, Affine, CRSType]:
+        """_summary_
+
+        Returns:
+            tuple[np.ndarray, Affine, CRSType]: _description_
+        """
         dst_crs = "EPSG:3857"
         dataset = self.worldcover
 
-        # Original bounds in source CRS
-        left, bottom, right, top = dataset.bounds
+        minx_aoi, miny_aoi, maxx_aoi, maxy_aoi = self.aoi_bbox
 
-        # Transform bounds to EPSG:3857
-        transformer = Transformer.from_crs(dataset.crs, dst_crs, always_xy=True)
-        minx, miny = transformer.transform(left, bottom)
-        maxx, maxy = transformer.transform(right, top)
+        width_px = int((maxx_aoi - minx_aoi) / self.resolution)
+        height_px = int((maxy_aoi - miny_aoi) / self.resolution)
 
-        width = math.ceil((maxx - minx) / self.resolution)
-        height = math.ceil((maxy - miny) / self.resolution)
-
-        transform, width, height = calculate_default_transform(
-            dataset.crs,
-            dst_crs,
-            dataset.width,
-            dataset.height,
-            left,
-            bottom,
-            right,
-            top,
-            dst_width=width,
-            dst_height=height,
+        target_transform = from_bounds(
+            minx_aoi, miny_aoi, maxx_aoi, maxy_aoi, width_px, height_px
         )
 
-        full_array = np.empty((height, width), dtype=dataset.dtypes[0])
+        full_array = np.empty((height_px, width_px), dtype=dataset.dtypes[0])
 
         reproject(
             source=dataset.read(1),
             destination=full_array,
             src_transform=dataset.transform,
             src_crs=dataset.crs,
-            dst_transform=transform,
+            dst_transform=target_transform,
             dst_crs=dst_crs,
             resampling=Resampling.bilinear,
         )
 
-        minx, miny, maxx, maxy = self.aoi_bbox
-        window = from_bounds(minx, miny, maxx, maxy, transform)
-        window = window.round_offsets().round_lengths()
-
-        cropped = full_array[
-            int(window.row_off) : int(window.row_off + window.height),
-            int(window.col_off) : int(window.col_off + window.width),
-        ]
-
-        cropped_transform = rasterio.windows.transform(window, transform)
-
-        self.aoi_worldcover = cropped
-        return cropped, cropped_transform, dst_crs
+        self.aoi_worldcover = full_array
+        return full_array, target_transform, dst_crs
