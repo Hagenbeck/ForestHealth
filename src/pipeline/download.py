@@ -44,7 +44,6 @@ class DownloadPipeline:
         result = []
         for ind, start_interval in enumerate(ms_date):
             data = self.request_and_stack_tiles(
-                geom_tools=self.geom_tools,
                 evalscript_type=self.config.EVALSCRIPT_TYPE,
                 start_date=start_interval,
                 end_date=me_date[ind],
@@ -80,12 +79,11 @@ class DownloadPipeline:
 
     def request_and_stack_tiles(
         self,
-        geom_tools: GeometryToolkit,
         evalscript_type: EvalScriptType,
         start_date: datetime,
         end_date: datetime,
     ) -> np.ndarray:
-        height, width, coords = np.shape(geom_tools.tiles)
+        height, width, coords = np.shape(self.geom_tools.tiles)
 
         sentinelhub_api = self.sentinel_api
 
@@ -95,10 +93,10 @@ class DownloadPipeline:
         for i in range(height - 2, -1, -1):
             row_tiles = []
             for j in range(width - 1):
-                bbox = geom_tools.get_bbox(i, j)
-                width_px, height_px = geom_tools.get_pixels(bbox)
+                bbox = self.geom_tools.get_bbox(i, j)
+                width_px, height_px = self.geom_tools.get_pixels(bbox)
 
-                if not geom_tools.bbox_intersects_geometry(bbox):
+                if not self.geom_tools.bbox_intersects_geometry(bbox):
                     row_tiles.append(
                         {"data": None, "width_px": width_px, "height_px": height_px}
                     )
