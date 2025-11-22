@@ -70,7 +70,7 @@ class DownloadPipeline:
             except Exception:
                 pass
 
-        if len(response.content) < 1000:
+        if len(response.content) < 500:
             print(f"Response content is very small ({len(response.content)} bytes)")
             print(f"First 200 bytes: {response.content[:200]}")
             return False
