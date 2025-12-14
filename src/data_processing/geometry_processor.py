@@ -24,7 +24,7 @@ class GeometryProcessor:
     resolution: int
 
     def __init__(self, data_file: str = cf.OBSERVATION_SAVE_FILE):
-        self.monthly_observation = np.load(get_data_path(data_file))
+        self.monthly_observations = np.load(get_data_path(data_file))
         self.aoi_geometry = GeometryToolkit.retrieve_geometry(
             get_data_path(cf.GEOMETRY_FILE)
         )
@@ -36,6 +36,7 @@ class GeometryProcessor:
         )
         self.worldcover = GeometryProcessor.load_raster_layer(cf.WORLDCOVER_FILE)
         self.resolution = cf.RESOLUTION
+        self.aoi_worldcover = None
 
     @staticmethod
     def load_raster_layer(raster_file: str) -> rasterio.io.DatasetReader:
@@ -111,8 +112,59 @@ class GeometryProcessor:
             src_crs=dataset.crs,
             dst_transform=target_transform,
             dst_crs=dst_crs,
-            resampling=Resampling.bilinear,
+            resampling=Resampling.nearest,
         )
 
         self.aoi_worldcover = full_array
         return full_array, target_transform, dst_crs
+
+    def _create_forest_mask_from_worldcover_raster(self) -> np.ndarray:
+        """_summary_
+
+        Returns:
+            np.ndarray: _description_
+        """
+
+        if self.aoi_worldcover is None:
+            self.retrieve_worldcover_raster_for_aoi()
+
+        return self.aoi_worldcover == 10
+
+    def flatten_and_filter_monthly_data(self) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Filter spatial data by boolean mask, flatten to pixel list, and include coordinates.
+
+        Returns:
+            pixel_data : np.ndarray
+                Shape (n_months, bands, n_forest_pixels)
+            pixel_coords : np.ndarray
+                Shape (n_forest_pixels, 2) with columns [row, col]
+                These are the (y, x) indices in the original spatial grid
+        """
+
+        forest_mask = self._create_forest_mask_from_worldcover_raster()
+
+        n_months, bands, height, width = self.monthly_observations.shape
+
+        rows, cols = np.where(forest_mask)
+        self.pixel_coords = np.column_stack([rows, cols])
+        self.output_shape = (height, width)
+
+        data_flat = self.monthly_observations.reshape(n_months, bands, -1)
+        mask_flat = forest_mask.flatten()
+        pixel_data = data_flat[:, :, mask_flat]
+
+        return pixel_data, self.pixel_coords
+
+    def reconstruct_2d(self, values: np.ndarray) -> np.ndarray:
+        """Reconstruct 2D array from flat values and coordinates.
+
+        Args:
+            values (np.ndarray): Shape (n_forest_pixels,) - predictions or features for each pixel
+
+        Returns:
+            np.ndarray: Shape (height, width) with values placed at coordinates, NaN elsewhere
+        """
+        result = np.full(self.output_shape, np.nan)
+        result[self.pixel_coords[:, 0], self.pixel_coords[:, 1]] = values
+        return result
