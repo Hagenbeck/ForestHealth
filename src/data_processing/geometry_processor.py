@@ -152,7 +152,7 @@ class GeometryProcessor:
 
         data_flat = self.monthly_observations.reshape(n_months, bands, -1)
         mask_flat = forest_mask.flatten()
-        pixel_data = data_flat[:, :, mask_flat]
+        pixel_data = data_flat[:, :, mask_flat].transpose(2, 0, 1)
 
         return pixel_data, self.pixel_coords
 
