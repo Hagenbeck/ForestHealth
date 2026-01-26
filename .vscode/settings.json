@@ -14,7 +14,8 @@
       "data_processing",
       "pipeline",
       "tests",
-      "core"
+      "core",
+      "pydantic_models"
     ],
     "[python]": {
     "editor.tabSize": 4,
