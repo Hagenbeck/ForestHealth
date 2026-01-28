@@ -1,3 +1,35 @@
 {
-    "test": 1
+    "features" : [
+        {
+            "type": "mean",
+            "band_id": 5,
+            "consideration_interval_start": -12
+        },
+        {
+            "type": "mean",
+            "band_id": 6,
+            "consideration_interval_start": -12
+        },
+        {
+            "type": "difference_in_mean_between_intervals",
+            "band_id": 6,
+            "interval_one_start": 0,
+            "interval_one_end":11,
+            "interval_two_start": -12,
+            "interval_two_end":-1
+        },
+        {
+            "type": "std",
+            "band_id": 0
+        },
+        {
+            "type": "spatial_std_difference",
+            "band_id": 5,
+            "window_size": 5,
+            "interval_one_start": 0,
+            "interval_one_end":11,
+            "interval_two_start": -12,
+            "interval_two_end":-1
+        }
+    ]
 }

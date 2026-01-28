@@ -12,13 +12,12 @@ from pydantic_models.feature_setting_spatial import (
 from pydantic_models.feature_setting_temporal import (
     DeseasonalizedDiffFeature,
     DeseasonalizedDiffSpecificMonthFeature,
+    DifferenceInMeanBetweenIntervals,
     MeanFeature,
     RawFeature,
     StdFeature,
 )
 from pydantic_models.foresthealth_base_model import ForestHealthBaseModel
-
-# ==================== Discriminated Union ====================
 
 Feature = Annotated[
     Union[
@@ -27,6 +26,7 @@ Feature = Annotated[
         StdFeature,
         DeseasonalizedDiffFeature,
         DeseasonalizedDiffSpecificMonthFeature,
+        DifferenceInMeanBetweenIntervals,
         SpatialCVFeature,
         SpatialStdFeature,
         SpatialStdDifferenceFeature,

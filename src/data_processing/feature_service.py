@@ -1,11 +1,19 @@
+import json
+import pathlib as pl
+
 import numpy as np
 import pandas as pd
+
+from pydantic_models.feature_setting import FeatureSetting
+
+# from scipy.ndimage import gaussian_filter, generic_filter, sobel
 
 
 class FeatureService:
     raw_data: np.ndarray
+    feature_setting: FeatureSetting
 
-    def __init__(self, raw_data: np.ndarray):
+    def __init__(self, raw_data: np.ndarray, feature_settings: FeatureSetting = None):
         """Initialize the FeatureService with multi-dimensional array data.
 
         Args:
@@ -13,6 +21,16 @@ class FeatureService:
                 containing monthly satellite imagery data across multiple bands.
         """
         self.raw_data = raw_data
+        if feature_settings is not None:
+            self.feature_setting = feature_settings
+        else:
+            self.feature_setting = FeatureSetting(
+                **json.loads(
+                    (
+                        pl.Path(__file__).parent.parent / "default_features.json"
+                    ).read_text()
+                )
+            )
 
     def calculate_features_for_monthly_data(self) -> pd.DataFrame:
         """Calculate vegetation and water indices features from monthly satellite data.
@@ -21,11 +39,7 @@ class FeatureService:
         differences for September measurements of NDRE705, NDVI, and NDWI indices.
 
         Returns:
-            pd.DataFrame: DataFrame containing calculated features with columns:
-                - Mean_All_NDRE740: Mean NDRE740 across all time periods
-                - Mean_Diff_Sept_NDRE705: Mean year-over-year September NDRE705 difference
-                - Mean_Diff_Sept_NDVI: Mean year-over-year September NDVI difference
-                - Mean_Diff_Sept_NDWI: Mean year-over-year September NDWI difference
+            pd.DataFrame: DataFrame containing calculated features with columns
         """
         feature_df = pd.DataFrame()
 
