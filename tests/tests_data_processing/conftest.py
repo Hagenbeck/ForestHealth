@@ -3,7 +3,8 @@
 import numpy as np
 import pytest
 
-from src.data_processing.feature_calculators import (
+from data_processing.band_dto import BandDTO
+from data_processing.feature_calculators import (
     DeseasonalizedDiffCalculator,
     DeseasonalizedDiffSpecificMonthCalculator,
     DifferenceInMeanBetweenIntervalsCalculator,
@@ -16,16 +17,16 @@ from src.data_processing.feature_calculators import (
     SpatialStdDifferenceCalculator,
     StdCalculator,
 )
-from src.data_processing.feature_service import FeatureService
-from src.pydantic_models.feature_setting import FeatureSetting
-from src.pydantic_models.feature_setting_spatial import (
+from data_processing.feature_service import FeatureService
+from pydantic_models.feature_setting import FeatureSetting
+from pydantic_models.feature_setting_spatial import (
     SpatialCVFeature,
     SpatialEdgeStrengthFeature,
     SpatialRangeFeature,
     SpatialStdDifferenceFeature,
     SpatialStdFeature,
 )
-from src.pydantic_models.feature_setting_temporal import (
+from pydantic_models.feature_setting_temporal import (
     DeseasonalizedDiffFeature,
     DeseasonalizedDiffSpecificMonthFeature,
     DifferenceInMeanBetweenIntervalsFeature,
@@ -40,34 +41,95 @@ from src.pydantic_models.feature_setting_temporal import (
 
 
 @pytest.fixture
-def sample_data():
-    """Standard sample data: 5 indices, 24 months, 7 bands"""
-    return np.random.rand(5, 24, 7)
+def sample_pixel_data():
+    """
+    Standard sample data for testing.
+    Shape: (n_months=24, n_pixels=5, n_bands=7)
+    """
+    return np.random.rand(24, 5, 7)
+
+
+@pytest.fixture
+def sample_spatial_data():
+    """
+    Standard spatial data for testing.
+    Shape: (n_months=24, n_bands=7, height=10, width=10)
+    """
+    return np.random.rand(24, 7, 10, 10)
+
+
+@pytest.fixture
+def sample_pixel_coords():
+    """Pixel coordinates for 5 forest pixels"""
+    return np.array([[2, 3], [4, 5], [6, 7], [8, 9], [1, 2]])
+
+
+@pytest.fixture
+def sample_band_dto(sample_pixel_data, sample_spatial_data, sample_pixel_coords):
+    """Complete BandDTO with all three components"""
+    return BandDTO(
+        pixel_list=sample_pixel_data,
+        spatial_data=sample_spatial_data,
+        pixel_coords=sample_pixel_coords,
+    )
 
 
 @pytest.fixture
 def sample_data_with_pattern():
-    """Sample data with predictable values for testing"""
-    data = np.arange(5 * 24 * 7).reshape(5, 24, 7).astype(float)
+    """
+    Sample data with predictable values for testing calculations.
+    Each pixel has a different linear pattern over time.
+    Shape: (n_months=24, n_pixels=5, n_bands=7)
+    """
+    n_months, n_pixels, n_bands = 24, 5, 7
+    data = np.zeros((n_months, n_pixels, n_bands))
+
+    for pixel in range(n_pixels):
+        for band in range(n_bands):
+            # Each pixel-band combination has a linear trend
+            data[:, pixel, band] = np.arange(n_months) * (pixel + 1) * (band + 1)
+
     return data
 
 
 @pytest.fixture
-def raw_data_default():
-    """Standard raw data: 10 indices, 24 months, 7 bands"""
-    return np.random.rand(10, 24, 7)
+def band_dto_with_pattern(sample_data_with_pattern):
+    """BandDTO with predictable pattern data"""
+    n_months, n_pixels, n_bands = sample_data_with_pattern.shape
+    spatial_data = np.random.rand(n_months, n_bands, 10, 10)
+    pixel_coords = np.array([[i, i] for i in range(n_pixels)])
+
+    return BandDTO(
+        pixel_list=sample_data_with_pattern,
+        spatial_data=spatial_data,
+        pixel_coords=pixel_coords,
+    )
 
 
 @pytest.fixture
-def raw_data_small():
-    """Smaller raw data: 5 indices, 12 months, 7 bands"""
-    return np.random.rand(5, 12, 7)
+def small_band_dto():
+    """
+    Smaller BandDTO for quick tests.
+    Shape: (n_months=12, n_pixels=3, n_bands=7)
+    """
+    return BandDTO(
+        pixel_list=np.random.rand(12, 3, 7),
+        spatial_data=np.random.rand(12, 7, 5, 5),
+        pixel_coords=np.array([[0, 0], [1, 1], [2, 2]]),
+    )
 
 
 @pytest.fixture
-def raw_data_tiny():
-    """Tiny raw data for minimal testing"""
-    return np.array([[[1, 2], [3, 4]]])
+def tiny_band_dto():
+    """
+    Tiny BandDTO for minimal testing.
+    Shape: (n_months=2, n_pixels=2, n_bands=2)
+    """
+    return BandDTO(
+        pixel_list=np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
+        spatial_data=np.random.rand(2, 2, 3, 3),
+        pixel_coords=np.array([[0, 0], [1, 1]]),
+    )
 
 
 # ============================================================================
@@ -277,12 +339,12 @@ def mixed_feature_setting():
 
 
 @pytest.fixture
-def feature_service_default(raw_data_default):
+def feature_service_default(sample_band_dto):
     """FeatureService with default features"""
-    return FeatureService(raw_data_default)
+    return FeatureService(sample_band_dto)
 
 
 @pytest.fixture
-def feature_service_custom(raw_data_small, single_mean_feature_setting):
+def feature_service_custom(small_band_dto, single_mean_feature_setting):
     """FeatureService with custom features"""
-    return FeatureService(raw_data_small, feature_settings=single_mean_feature_setting)
+    return FeatureService(small_band_dto, feature_settings=single_mean_feature_setting)
