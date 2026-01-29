@@ -4,24 +4,26 @@ import pathlib as pl
 import numpy as np
 import pandas as pd
 
+from data_processing.band_dto import BandDTO
 from data_processing.feature_calculators import FeatureCalculator
 from pydantic_models.feature_setting import Feature, FeatureSetting
 
 
 class FeatureService:
     CALCULATORS = FeatureCalculator._registry
-    raw_data: np.ndarray
+    input_data: BandDTO
     feature_setting: FeatureSetting
     created_features: list[str]
 
-    def __init__(self, raw_data: np.ndarray, feature_settings: FeatureSetting = None):
+    def __init__(self, input_data: BandDTO, feature_settings: FeatureSetting = None):
         """Initialize the FeatureService with multi-dimensional array data.
 
         Args:
             raw_data (np.ndarray): Input array with shape (index, time, bands)
                 containing monthly satellite imagery data across multiple bands.
         """
-        self.raw_data = raw_data
+        self.input_data = input_data
+        
         if feature_settings is not None:
             self.feature_setting = feature_settings
         else:
@@ -48,7 +50,7 @@ class FeatureService:
         for feature in self.feature_setting.features:
             calculator: FeatureCalculator = self.CALCULATORS[feature.type]
             feature_df[self.__get_feature_name(feature)] = calculator.create_feature(
-                feature, self.raw_data
+                feature, self.input_data
             )
 
         return feature_df
