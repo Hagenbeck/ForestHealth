@@ -55,7 +55,7 @@ class DeseasonalizedDiffSpecificMonthFeature(FeatureBase):
     consideration_interval_end: int | None = Field(default=None)
 
 
-class DifferenceInMeanBetweenIntervals(FeatureBase):
+class DifferenceInMeanBetweenIntervalsFeature(FeatureBase):
     """The difference between the means of two time intervals"""
 
     type: Literal["difference_in_mean_between_intervals"] = (
