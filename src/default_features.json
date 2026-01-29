@@ -14,9 +14,9 @@
             "type": "difference_in_mean_between_intervals",
             "band_id": 6,
             "interval_one_start": 0,
-            "interval_one_end":11,
+            "interval_one_end":12,
             "interval_two_start": -12,
-            "interval_two_end":-1
+            "interval_two_end":null
         },
         {
             "type": "std",
@@ -27,9 +27,9 @@
             "band_id": 5,
             "window_size": 5,
             "interval_one_start": 0,
-            "interval_one_end":11,
+            "interval_one_end":12,
             "interval_two_start": -12,
-            "interval_two_end":-1
+            "interval_two_end":null
         }
     ]
 }

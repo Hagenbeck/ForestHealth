@@ -10,6 +10,10 @@ You can define your own feature set by either:
 * editing the `default_features.json`
 * creating the FeatureService with a custom featuresetting
 
+The consideration intervals are set like usual python slicing, with the start value being inclusive and the end value being exclusive.  
+`start = 0` and `end = 12` would mean the first 12 values.  
+`start = -12` and `end = null` means the last 12 values.  
+
 ## File Structure
 
 The `default_features.json` file contains a JSON object with a single `features` array:

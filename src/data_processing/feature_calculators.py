@@ -37,13 +37,15 @@ class FeatureCalculator(ABC):
         """Template method that handles consideration intervals, then delegates to calculation"""
 
         if "consideration_interval_start" in type(feature).model_fields:
-            self._apply_consideration_intervals(
+            sliced_data = self._apply_consideration_intervals(
                 input_data,
                 feature.consideration_interval_start,
                 feature.consideration_interval_end,
             )
+        else:
+            sliced_data = input_data
 
-        return self._calculate(input_data, feature)
+        return self._calculate(sliced_data, feature)
 
     @abstractmethod
     def _calculate(self, input_data: BandDTO, feature: Feature) -> np.ndarray:
@@ -53,7 +55,8 @@ class FeatureCalculator(ABC):
     def _apply_consideration_intervals(self, input_data: BandDTO, start: int, end: int):
         """Shared utility for slicing time intervals"""
         if start is not None or end is not None:
-            input_data.pixel_list = input_data.pixel_list[:, start:end, :] # TODO Fix
+            input_data.pixel_list = input_data.pixel_list[start:end]  # TODO Test
+            input_data.spatial_data = input_data.spatial_data[start:end]
 
 
 class RawCalculator(FeatureCalculator):
@@ -72,7 +75,7 @@ class MeanCalculator(FeatureCalculator):
     feature_type = "mean"
 
     def _calculate(self, input_data: BandDTO, feature: MeanFeature) -> np.ndarray:
-        return input_data.pixel_list[:, :, feature.band_id].mean(axis=1)
+        return input_data.pixel_list[:, :, feature.band_id].mean(axis=0)
 
 
 class StdCalculator(FeatureCalculator):
@@ -126,9 +129,7 @@ class SpatialCVCalculator(FeatureCalculator):
 
     feature_type = "spatial_cv"
 
-    def _calculate(
-        self, input_data: BandDTO, feature: SpatialCVFeature
-    ) -> np.ndarray:
+    def _calculate(self, input_data: BandDTO, feature: SpatialCVFeature) -> np.ndarray:
         """Calculate local coefficient of variation within a window."""
         pass
 
@@ -138,9 +139,7 @@ class SpatialStdCalculator(FeatureCalculator):
 
     feature_type = "spatial_std"
 
-    def _calculate(
-        self, input_data: BandDTO, feature: SpatialStdFeature
-    ) -> np.ndarray:
+    def _calculate(self, input_data: BandDTO, feature: SpatialStdFeature) -> np.ndarray:
         """Calculate local standard deviation within a window."""
         pass
 
