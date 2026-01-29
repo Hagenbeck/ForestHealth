@@ -12,7 +12,7 @@ from pydantic_models.feature_setting_spatial import (
 from pydantic_models.feature_setting_temporal import (
     DeseasonalizedDiffFeature,
     DeseasonalizedDiffSpecificMonthFeature,
-    DifferenceInMeanBetweenIntervals,
+    DifferenceInMeanBetweenIntervalsFeature,
     MeanFeature,
     RawFeature,
     StdFeature,
@@ -26,7 +26,7 @@ Feature = Annotated[
         StdFeature,
         DeseasonalizedDiffFeature,
         DeseasonalizedDiffSpecificMonthFeature,
-        DifferenceInMeanBetweenIntervals,
+        DifferenceInMeanBetweenIntervalsFeature,
         SpatialCVFeature,
         SpatialStdFeature,
         SpatialStdDifferenceFeature,

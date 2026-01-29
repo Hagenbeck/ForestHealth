@@ -4,14 +4,15 @@ import pathlib as pl
 import numpy as np
 import pandas as pd
 
-from pydantic_models.feature_setting import FeatureSetting
-
-# from scipy.ndimage import gaussian_filter, generic_filter, sobel
+from data_processing.feature_calculators import FeatureCalculator
+from pydantic_models.feature_setting import Feature, FeatureSetting
 
 
 class FeatureService:
+    CALCULATORS = FeatureCalculator._registry
     raw_data: np.ndarray
     feature_setting: FeatureSetting
+    created_features: list[str]
 
     def __init__(self, raw_data: np.ndarray, feature_settings: FeatureSetting = None):
         """Initialize the FeatureService with multi-dimensional array data.
@@ -42,40 +43,34 @@ class FeatureService:
             pd.DataFrame: DataFrame containing calculated features with columns
         """
         feature_df = pd.DataFrame()
+        self.created_features = []
 
-        feature_df["Mean_All_NDRE740"] = self._get_mean_all_feature(band_id=3)
-        feature_df["Mean_Diff_Sept_NDRE705"] = self._get_mean_diff__feature(band_id=2, month=8)  # fmt: skip
-        feature_df["Mean_Diff_Sept_NDVI"] = self._get_mean_diff__feature(band_id=5, month=8)  # fmt: skip
-        feature_df["Mean_Diff_Sept_NDWI"] = self._get_mean_diff__feature(band_id=6, month=8)  # fmt: skip
+        for feature in self.feature_setting.features:
+            calculator: FeatureCalculator = self.CALCULATORS[feature.type]
+            feature_df[self.__get_feature_name(feature)] = calculator.create_feature(
+                feature, self.raw_data
+            )
 
         return feature_df
 
-    def _get_mean_all_feature(self, band_id: int) -> np.ndarray:
-        """Calculate the mean value across all time periods for a specific band.
+    def __get_feature_name(self, feature: Feature) -> str:
+        """Method that calculates the feature name that should
+        be used when adding this feature to the feature dataframe with deduplication logic
 
         Args:
-            band_id (int): Index of the band to extract (e.g., 3 for NDRE740).
+            feature (Feature): feature that will be added to the feature dataframe
 
         Returns:
-            np.ndarray: 1D array of shape (index,) containing the temporal
-                mean values for the specified band across all indices.
+            str: name to be used in the feature dataframe
         """
-        return self.raw_data[:, :, band_id].mean(axis=1)
 
-    def _get_mean_diff__feature(self, band_id: int, month: int) -> np.ndarray:
-        """Calculate the mean year-over-year difference for a specific band and month.
+        feature_name = feature.type
+        i = 2
 
-        Computes the difference between corresponding months in consecutive years,
-        then averages across all year pairs for the specified month.
+        while feature_name in self.created_features:
+            feature_name = feature.type + str(i)
+            i += 1
 
-        Args:
-            band_id (int): Index of the band to extract (e.g., 2 for NDRE705,
-                5 for NDVI, 6 for NDWI).
-            month (int): Zero-indexed month number (0=January, 8=September, etc.)
-                to calculate differences for.
+        self.created_features = self.created_features + [feature_name]
 
-        Returns:
-            np.ndarray: 1D array of shape (index,) containing the mean
-                year-over-year difference values for the specified band and month.
-        """
-        return (self.raw_data[:, 12:, band_id] - self.raw_data[:, :-12, band_id])[:, month::12].mean(axis=1)  # fmt: skip
+        return feature_name
