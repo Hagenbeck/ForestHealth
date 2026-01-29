@@ -10,6 +10,7 @@ from sentinelhub import BBox
 
 import config as cf
 from core.paths import get_data_path
+from data_processing.band_dto import BandDTO
 from data_sourcing.data_models import CRSType
 from data_sourcing.geometry_toolkit import GeometryToolkit
 
@@ -130,13 +131,13 @@ class GeometryProcessor:
 
         return self.aoi_worldcover == 10
 
-    def flatten_and_filter_monthly_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def flatten_and_filter_monthly_data(self) -> BandDTO:
         """
         Filter spatial data by boolean mask, flatten to pixel list, and include coordinates.
 
         Returns:
             pixel_data : np.ndarray
-                Shape (n_months, bands, n_forest_pixels)
+                Shape (n_months, n_forest_pixels, bands)
             pixel_coords : np.ndarray
                 Shape (n_forest_pixels, 2) with columns [row, col]
                 These are the (y, x) indices in the original spatial grid
@@ -152,9 +153,13 @@ class GeometryProcessor:
 
         data_flat = self.monthly_observations.reshape(n_months, bands, -1)
         mask_flat = forest_mask.flatten()
-        pixel_data = data_flat[:, :, mask_flat].transpose(2, 0, 1)
+        pixel_data = data_flat[:, :, mask_flat].transpose(0, 2, 1)
 
-        return pixel_data, self.pixel_coords
+        return BandDTO(
+            pixel_list=pixel_data,
+            pixel_coords=self.pixel_coords,
+            spatial_data=self.monthly_observations,
+        )
 
     def reconstruct_2d(self, values: np.ndarray) -> np.ndarray:
         """Reconstruct 2D array from flat values and coordinates.

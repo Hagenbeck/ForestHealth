@@ -1,7 +1,6 @@
 import json
 import pathlib as pl
 
-import numpy as np
 import pandas as pd
 
 from data_processing.band_dto import BandDTO
@@ -23,7 +22,7 @@ class FeatureService:
                 containing monthly satellite imagery data across multiple bands.
         """
         self.input_data = input_data
-        
+
         if feature_settings is not None:
             self.feature_setting = feature_settings
         else:
