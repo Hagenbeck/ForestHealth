@@ -54,9 +54,14 @@ class FeatureCalculator(ABC):
 
     def _apply_consideration_intervals(self, input_data: BandDTO, start: int, end: int):
         """Shared utility for slicing time intervals"""
-        if start is not None or end is not None:
-            input_data.pixel_list = input_data.pixel_list[start:end]  # TODO Test
-            input_data.spatial_data = input_data.spatial_data[start:end]
+        if start is None and end is None:
+            return input_data
+
+        return BandDTO(
+            pixel_list=input_data.pixel_list[start:end, :, :],
+            spatial_data=input_data.spatial_data[start:end, :, :, :],
+            pixel_coords=input_data.pixel_coords,
+        )  # TODO Test
 
 
 class RawCalculator(FeatureCalculator):

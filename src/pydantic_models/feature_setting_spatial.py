@@ -34,7 +34,7 @@ class SpatialStdDifferenceFeature(FeatureBase):
     interval_one_start: int = Field(default=0)
     interval_one_end: int = Field(default=11)
     interval_two_start: int = Field(default=-12)
-    interval_two_end: int = Field(default=-1)
+    interval_two_end: int | None = Field(default=None)
 
 
 class SpatialRangeFeature(FeatureBase):
