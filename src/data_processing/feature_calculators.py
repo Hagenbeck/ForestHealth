@@ -190,14 +190,20 @@ class SpatialStdDifferenceCalculator(FeatureCalculator):
     ) -> np.ndarray:
         """Calculate spatial STD of difference between two time interval means."""
 
-        diff_data = input_data.pixel_list[
-            feature.interval_two_start : feature.interval_two_end, :, feature.band_id
-        ].mean(axis=(0)) - input_data.pixel_list[
-            feature.interval_one_start : feature.interval_one_end, :, feature.band_id
+        diff_data = input_data.spatial_data[
+            feature.interval_two_start : feature.interval_two_end,
+            feature.band_id,
+            :,
+            :,
+        ].mean(axis=(0)) - input_data.spatial_data[
+            feature.interval_one_start : feature.interval_one_end,
+            feature.band_id,
+            :,
+            :,
         ].mean(axis=(0))
 
         index_data = generic_filter(
-            diff_data[feature.band_id],
+            diff_data,
             np.std,
             size=feature.window_size,
             mode="constant",
