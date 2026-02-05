@@ -314,7 +314,7 @@ class TestSpatialCalculators:
         )
 
         # Should return flattened spatial features
-        assert len(result.shape) >= 1
+        assert len(result.shape) == 1
 
     def test_spatial_std_registered(self):
         """Test that SpatialStdCalculator is registered"""
