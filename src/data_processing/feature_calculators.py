@@ -90,7 +90,7 @@ class StdCalculator(FeatureCalculator):
 
     def _calculate(self, input_data: BandDTO, feature: StdFeature) -> np.ndarray:
         """Calculate standard deviation across time periods."""
-        pass
+        return input_data.pixel_list[:, :, feature.band_id].std(axis=0)
 
 
 class DeseasonalizedDiffCalculator(FeatureCalculator):
@@ -102,7 +102,9 @@ class DeseasonalizedDiffCalculator(FeatureCalculator):
         self, input_data: BandDTO, feature: DeseasonalizedDiffFeature
     ) -> np.ndarray:
         """Calculate differences between time points at a fixed lag."""
-        pass
+        return np.diff(
+            input_data.pixel_list[:, :, feature.band_id], axis=0, n=feature.lag
+        ).mean(axis=0)
 
 
 class DeseasonalizedDiffSpecificMonthCalculator(FeatureCalculator):
@@ -114,7 +116,11 @@ class DeseasonalizedDiffSpecificMonthCalculator(FeatureCalculator):
         self, input_data: BandDTO, feature: DeseasonalizedDiffSpecificMonthFeature
     ) -> np.ndarray:
         """Calculate year-over-year differences for a specific month."""
-        pass
+        return np.diff(
+            input_data.pixel_list[feature.month :: 12, :, feature.band_id],
+            axis=0,
+            n=feature.lag,
+        ).mean(axis=0)
 
 
 class DifferenceInMeanBetweenIntervalsCalculator(FeatureCalculator):
@@ -126,7 +132,11 @@ class DifferenceInMeanBetweenIntervalsCalculator(FeatureCalculator):
         self, input_data: BandDTO, feature: DifferenceInMeanBetweenIntervalsFeature
     ) -> np.ndarray:
         """Calculate difference between two time interval means."""
-        pass
+        return input_data.pixel_list[
+            feature.interval_two_start : feature.interval_two_end, :, feature.band_id
+        ].mean(axis=(0)) - input_data.pixel_list[
+            feature.interval_one_start : feature.interval_one_end, :, feature.band_id
+        ].mean(axis=(0))
 
 
 class SpatialCVCalculator(FeatureCalculator):
