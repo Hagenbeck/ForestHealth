@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from scipy.ndimage import gaussian_filter, generic_filter, sobel
 
 from data_processing.band_dto import BandDTO
 from pydantic_models.feature_setting import Feature
@@ -144,9 +145,22 @@ class SpatialCVCalculator(FeatureCalculator):
 
     feature_type = "spatial_cv"
 
+    def cv_func(self, arr):
+        mean = np.mean(arr)
+        std = np.std(arr)
+        return std / mean if mean != 0 else 0
+
     def _calculate(self, input_data: BandDTO, feature: SpatialCVFeature) -> np.ndarray:
         """Calculate local coefficient of variation within a window."""
-        pass
+
+        index_data = generic_filter(
+            input_data.spatial_data.mean(axis=0)[feature.band_id],
+            self.cv_func,
+            size=feature.window_size,
+            mode="constant",
+            cval=0,
+        )
+        return index_data[input_data.pixel_coords[:, 0], input_data.pixel_coords[:, 1]]
 
 
 class SpatialStdCalculator(FeatureCalculator):
@@ -156,7 +170,14 @@ class SpatialStdCalculator(FeatureCalculator):
 
     def _calculate(self, input_data: BandDTO, feature: SpatialStdFeature) -> np.ndarray:
         """Calculate local standard deviation within a window."""
-        pass
+        index_data = generic_filter(
+            input_data.spatial_data.mean(axis=0)[feature.band_id],
+            np.std,
+            size=feature.window_size,
+            mode="constant",
+            cval=0,
+        )
+        return index_data[input_data.pixel_coords[:, 0], input_data.pixel_coords[:, 1]]
 
 
 class SpatialStdDifferenceCalculator(FeatureCalculator):
@@ -168,7 +189,21 @@ class SpatialStdDifferenceCalculator(FeatureCalculator):
         self, input_data: BandDTO, feature: SpatialStdDifferenceFeature
     ) -> np.ndarray:
         """Calculate spatial STD of difference between two time interval means."""
-        pass
+
+        diff_data = input_data.pixel_list[
+            feature.interval_two_start : feature.interval_two_end, :, feature.band_id
+        ].mean(axis=(0)) - input_data.pixel_list[
+            feature.interval_one_start : feature.interval_one_end, :, feature.band_id
+        ].mean(axis=(0))
+
+        index_data = generic_filter(
+            diff_data[feature.band_id],
+            np.std,
+            size=feature.window_size,
+            mode="constant",
+            cval=0,
+        )
+        return index_data[input_data.pixel_coords[:, 0], input_data.pixel_coords[:, 1]]
 
 
 class SpatialRangeCalculator(FeatureCalculator):
@@ -176,11 +211,21 @@ class SpatialRangeCalculator(FeatureCalculator):
 
     feature_type = "spatial_range"
 
+    def range_func(self, arr):
+        return np.ptp(arr) if len(arr) > 0 else 0
+
     def _calculate(
         self, input_data: BandDTO, feature: SpatialRangeFeature
     ) -> np.ndarray:
         """Calculate local range (max - min) within a window."""
-        pass
+        index_data = generic_filter(
+            input_data.spatial_data.mean(axis=0)[feature.band_id],
+            self.range_func,
+            size=feature.window_size,
+            mode="constant",
+            cval=0,
+        )
+        return index_data[input_data.pixel_coords[:, 0], input_data.pixel_coords[:, 1]]
 
 
 class SpatialEdgeStrengthCalculator(FeatureCalculator):
@@ -188,8 +233,24 @@ class SpatialEdgeStrengthCalculator(FeatureCalculator):
 
     feature_type = "spatial_edge_strength"
 
+    def get_edge(self, data):
+        sigma = 1.0
+        if sigma > 0:
+            grid_2d = gaussian_filter(data, sigma=sigma)
+
+        # Sobel operators for x and y gradients
+        grad_x = sobel(grid_2d, axis=1)  # Horizontal edges
+        grad_y = sobel(grid_2d, axis=0)  # Vertical edges
+
+        # Gradient magnitude (edge strength)
+        gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+        return gradient_magnitude
+
     def _calculate(
         self, input_data: BandDTO, feature: SpatialEdgeStrengthFeature
     ) -> np.ndarray:
         """Calculate edge strength using Sobel gradient magnitude."""
-        pass
+        index_data = self.get_edge(
+            input_data.spatial_data.mean(axis=0)[feature.band_id]
+        )
+        return index_data[input_data.pixel_coords[:, 0], input_data.pixel_coords[:, 1]]
