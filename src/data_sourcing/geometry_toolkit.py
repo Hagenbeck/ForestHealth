@@ -1,6 +1,8 @@
 import geojson
 import numpy as np
+import rasterio
 from pyproj import Transformer
+from rasterio.transform import from_bounds
 from sentinelhub import CRS, BBox
 from shapely import Geometry
 from shapely.geometry import box, shape
@@ -166,3 +168,65 @@ class GeometryToolkit:
         height_px = int(height_m / self.resolution)
 
         return width_px, height_px
+
+    def save_as_geotiff(
+        self,
+        data: np.ndarray,
+        output_path: str,
+        crs: CRSType = "EPSG:3857",
+        compress: str = "lzw",
+        nodata_value: float | None = None,
+    ) -> None:
+        """Save array data as a GeoTIFF with proper georeferencing based on AOI extent.
+
+        Args:
+            data (np.ndarray): Shape (bands, height, width) or (height, width) for single band
+            output_path (str): Path where the GeoTIFF should be saved
+            crs (CRSType): Coordinate reference system (default: EPSG:3857)
+            compress (str): Compression method ('lzw', 'deflate', or None)
+            nodata_value (Optional[float]): Value to mark as NoData
+        """
+
+        if data.ndim == 2:
+            bands = 1
+            height, width = data.shape
+            data = data[np.newaxis, :, :]
+        elif data.ndim == 3:
+            bands, height, width = data.shape
+        else:
+            raise ValueError(f"Expected 2D or 3D array, got shape {data.shape}")
+
+        if crs == "EPSG:3857":
+            geometry_crs = self.get_geometry_as_3857()
+        else:
+            transformer = Transformer.from_crs(self.aoi_crs, crs, always_xy=True)
+            geometry_crs = transform(transformer.transform, self.aoi_geometry_shape)
+
+        minx, miny, maxx, maxy = geometry_crs.bounds
+
+        transform_affine = from_bounds(minx, miny, maxx, maxy, width, height)
+
+        write_options = {
+            "driver": "GTiff",
+            "height": height,
+            "width": width,
+            "count": bands,
+            "dtype": data.dtype,
+            "crs": crs,
+            "transform": transform_affine,
+        }
+
+        if compress:
+            write_options["compress"] = compress
+
+        if nodata_value is not None:
+            write_options["nodata"] = nodata_value
+
+        # Write the GeoTIFF
+        with rasterio.open(output_path, "w", **write_options) as dst:
+            dst.write(data)
+
+        print(f"GeoTIFF saved to: {output_path}")
+        print(f"  Shape: {(bands, height, width)} (bands, height, width)")
+        print(f"  CRS: {crs}")
+        print(f"  Bounds: ({minx:.2f}, {miny:.2f}, {maxx:.2f}, {maxy:.2f})")

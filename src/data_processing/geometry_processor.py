@@ -173,3 +173,44 @@ class GeometryProcessor:
         result = np.full(self.output_shape, np.nan)
         result[self.pixel_coords[:, 0], self.pixel_coords[:, 1]] = values
         return result
+
+    def export_reconstruction_as_geotiff(
+        self, values: np.ndarray, output_path: str, nodata_value: float = -9999.0
+    ) -> None:
+        """Export reconstructed 2D array as a GeoTIFF with proper georeferencing.
+
+        Args:
+            values (np.ndarray): Shape (n_forest_pixels,) - predictions or features for each pixel
+            output_path (str): Path where the GeoTIFF should be saved
+            nodata_value (float): Value to use for NoData pixels (default: -9999.0)
+        """
+        reconstructed = self.reconstruct_2d(values)
+
+        reconstructed = np.where(np.isnan(reconstructed), nodata_value, reconstructed)
+
+        if self.aoi_worldcover is None:
+            _, transform, crs = self.retrieve_worldcover_raster_for_aoi()
+        else:
+            minx_aoi, miny_aoi, maxx_aoi, maxy_aoi = self.aoi_bbox
+            width_px = int((maxx_aoi - minx_aoi) / self.resolution)
+            height_px = int((maxy_aoi - miny_aoi) / self.resolution)
+            transform = from_bounds(
+                minx_aoi, miny_aoi, maxx_aoi, maxy_aoi, width_px, height_px
+            )
+            crs = "EPSG:3857"
+
+        with rasterio.open(
+            output_path,
+            "w",
+            driver="GTiff",
+            height=reconstructed.shape[0],
+            width=reconstructed.shape[1],
+            count=1,
+            dtype=reconstructed.dtype,
+            crs=crs,
+            transform=transform,
+            nodata=nodata_value,
+        ) as dst:
+            dst.write(reconstructed, 1)
+
+        print(f"GeoTIFF exported to: {output_path}")
