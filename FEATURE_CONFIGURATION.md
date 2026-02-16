@@ -31,6 +31,22 @@ Each feature in the array is a JSON object that specifies:
 - **band_id**: Which band of data to analyze (required for most features)
 - Additional parameters depending on the feature type
 
+## Available Bands
+
+| # | Index | Meaning (High Values ~ +1) | Meaning (Low / Negative Values ~ 0 → -1) |
+|---|--------|-----------------------------|-------------------------------------------|
+| 0 | **SAVI** (Soil-Adjusted Vegetation Index) | Dense, healthy vegetation; strong vigor | Bare soil, sparse or no vegetation |
+| 1 | **EVI** (Enhanced Vegetation Index) | Dense, healthy canopy; reduced soil/atmosphere noise | Sparse or stressed vegetation, barren land |
+| 2 | **NDRE705** (Red-Edge 705) | High chlorophyll; early healthy growth | Early stress; chlorophyll reduction begins |
+| 3 | **NDRE740** (Red-Edge 740) | Balanced vegetation health | Moderate stress; photosynthetic decline |
+| 4 | **NDRE783** (Red-Edge 783) | Very healthy vegetation; high biomass | Heavy stress or senescence |
+| 5 | **NDVI** (Normalized Difference Vegetation Index) | Lush, green vegetation; high photosynthesis | Bare soil (~0), water or dead vegetation (<0) |
+| 6 | **NDWI (Gao)** | High leaf water content; well-watered canopy | Water stress; dry or senescent leaves |
+| 7 | **NDWI (McFeeters)** | Open water bodies (lakes, rivers) | Land or built-up areas; vegetation |
+| 8 | **NBR** (Normalized Burn Ratio) | Healthy, unburned vegetation | Burned/disturbed areas; ash or bare soil |
+
+
+
 ## Available Feature Types
 
 ### Temporal Features (Time-based Analysis)
