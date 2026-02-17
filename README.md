@@ -44,15 +44,22 @@ The code in this project is available for educational and demonstration purposes
 
 For questions about code usage, contact: github@peer-schlieker.de
 
-**Data Attribution:**
-This project's results are based on modified Copernicus Sentinel data 2020-2025. 
-The original Copernicus Sentinel data is freely available under EU law (Regulation EU No 377/2014) 
-for reproduction, distribution, communication to the public, and adaptation.
+## Data Attribution
 
-Original data source: Copernicus Open Access Hub / Copernicus API
+This project uses modified Copernicus Sentinel data from 2020–2025.  
+Original Copernicus Sentinel data are freely available for reproduction, distribution, public communication, and adaptation under EU law (Regulation (EU) No 377/2014) through the Copernicus Programme.
 
-This project includes ESA Worldcover data.
-© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium
+Source access: Copernicus Open Access Hub / Copernicus APIs.
+
+This project also incorporates ESA WorldCover data.  
+© ESA WorldCover Project 2021. Contains modified Copernicus Sentinel data (2021) processed by the European Space Agency WorldCover consortium.
+
+---
+
+## Digital Elevation Model
+
+Elevation data are derived from the ASTER Global Digital Elevation Model (V003), provided by NASA and distributed through the NASA Land Processes Distributed Active Archive Center (LP DAAC).  
+Dataset DOI: https://doi.org/10.5067/ASTER/ASTGTM.003
 
 **Acknowledgments**
 This project uses several open-source libraries. See environment.yml for the full list.
