@@ -54,5 +54,8 @@ Original data source: Copernicus Open Access Hub / Copernicus API
 This project includes ESA Worldcover data.
 © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium
 
+**Digital Elevation Model:**
+Elevation data were obtained from the ASTER Global Digital Elevation Model (V003) provided by [NASA LP DAAC](https://doi.org/10.5067/ASTER/ASTGTM.003).
+
 **Acknowledgments**
 This project uses several open-source libraries. See environment.yml for the full list.
