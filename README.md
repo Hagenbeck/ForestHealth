@@ -61,5 +61,8 @@ This project also incorporates ESA WorldCover data.
 Elevation data are derived from the ASTER Global Digital Elevation Model (V003), provided by NASA and distributed through the NASA Land Processes Distributed Active Archive Center (LP DAAC).  
 Dataset DOI: https://doi.org/10.5067/ASTER/ASTGTM.003
 
+**Digital Elevation Model:**
+Elevation data were obtained from the ASTER Global Digital Elevation Model (V003) provided by [NASA LP DAAC](https://doi.org/10.5067/ASTER/ASTGTM.003).
+
 **Acknowledgments**
 This project uses several open-source libraries. See environment.yml for the full list.
