@@ -9,6 +9,7 @@ from requests import Response
 
 import config as cf
 from core.date_utils import generate_monthly_interval, parse_date
+from core.logger import Logger, LogSegment
 from core.paths import get_data_path
 from data_sourcing.data_models import EvalScriptType
 from data_sourcing.geometry_toolkit import GeometryToolkit
@@ -27,6 +28,7 @@ class DownloadPipeline:
         sentinel_api: Optional[SentinelHubAPI] = None,
         config_module=cf,
     ):
+        self.logger = Logger.get_instance()
         self.config = config_module
         self.geom_tools = geom_tools or GeometryToolkit(
             self.config.GEOMETRY_FILE, self.config.GEOMETRY_FILE_CRS
@@ -34,6 +36,10 @@ class DownloadPipeline:
         self.sentinel_api = sentinel_api or SentinelHubAPI()
 
     def run(self) -> np.ndarray:
+        self.logger.info(
+            LogSegment.DATA_DOWNLOAD,
+            f"Starting download pipeline from {self.config.START_DATE} to {self.config.END_DATE}",
+        )
         start_date = parse_date(self.config.START_DATE)
         end_date = parse_date(self.config.END_DATE)
 
@@ -51,28 +57,46 @@ class DownloadPipeline:
             result.append(data)
 
         np.save(get_data_path(cf.OBSERVATION_SAVE_FILE), result)
+        self.logger.info(
+            LogSegment.DATA_DOWNLOAD,
+            f"Download pipeline completed. Saved {len(result)} monthly observations to {cf.OBSERVATION_SAVE_FILE}",
+        )
         return np.array(result)
 
     @staticmethod
     def validate_response_content(response: Response) -> bool:
-        print(f"Response status: {response.status_code}")
-        print(f"Response headers: {dict(response.headers)}")
-        print(
-            f"Response content type: {response.headers.get('content-type', 'Unknown')}"
+        logger = Logger.get_instance()
+        logger.info(
+            LogSegment.DATA_DOWNLOAD, f"Response status: {response.status_code}"
         )
-        print(f"Response content length: {len(response.content)} bytes")
+        logger.info(
+            LogSegment.DATA_DOWNLOAD,
+            f"Response content type: {response.headers.get('content-type', 'Unknown')}",
+        )
+        logger.info(
+            LogSegment.DATA_DOWNLOAD,
+            f"Response content length: {len(response.content)} bytes",
+        )
 
         if response.headers.get("content-type", "").startswith("application/json"):
             try:
                 error_data = response.json()
-                print(f"API returned JSON error: {json.dumps(error_data, indent=2)}")
+                logger.warning(
+                    LogSegment.DATA_DOWNLOAD,
+                    f"API returned JSON error: {json.dumps(error_data, indent=2)}",
+                )
                 return False
             except Exception:
                 pass
 
         if len(response.content) < 500:
-            print(f"Response content is very small ({len(response.content)} bytes)")
-            print(f"First 200 bytes: {response.content[:200]}")
+            logger.warning(
+                LogSegment.DATA_DOWNLOAD,
+                f"Response content is very small ({len(response.content)} bytes)",
+            )
+            logger.warning(
+                LogSegment.DATA_DOWNLOAD, f"First 200 bytes: {response.content[:200]}"
+            )
             return False
 
         return True
@@ -83,6 +107,10 @@ class DownloadPipeline:
         start_date: datetime,
         end_date: datetime,
     ) -> np.ndarray:
+        self.logger.info(
+            LogSegment.DATA_DOWNLOAD,
+            f"Requesting and stacking tiles for {start_date.date()} to {end_date.date()}",
+        )
         height, width, coords = np.shape(self.geom_tools.tiles)
 
         sentinelhub_api = self.sentinel_api
@@ -101,7 +129,7 @@ class DownloadPipeline:
                         {"data": None, "width_px": width_px, "height_px": height_px}
                     )
                 else:
-                    json_request = sentinelhub_api.build_json_request(
+                    self.json_request = sentinelhub_api.build_json_request(
                         width_px=width_px,
                         height_px=height_px,
                         start_date=start_date,
@@ -111,20 +139,18 @@ class DownloadPipeline:
                         crs="EPSG:3857",
                     )
 
-                    print(f"Sending request for tile [{i}, {j}] with:")
-                    print("BBox:", list(bbox))
-                    print(f"width: {width_px}, height: {height_px}")
-                    print(
-                        "Date range:",
-                        json_request["input"]["data"][0]["dataFilter"]["timeRange"],
+                    self.logger.info(
+                        LogSegment.DATA_DOWNLOAD,
+                        f"Sending request for tile [{i}, {j}] - BBox: {list(bbox)}, Size: {width_px}x{height_px}",
                     )
 
                     try:
                         response = sentinelhub_api.safe_send_request()
 
                         if not self.validate_response_content(response):
-                            print(
-                                f"Invalid response for tile [{i}, {j}], filling with zeros"
+                            self.logger.warning(
+                                LogSegment.DATA_DOWNLOAD,
+                                f"Invalid response for tile [{i}, {j}], filling with zeros",
                             )
                             row_tiles.append(
                                 {
@@ -139,13 +165,17 @@ class DownloadPipeline:
                             with MemoryFile(response.content) as memfile:
                                 with memfile.open() as ds:
                                     tile_data = ds.read()
-                                    print(
-                                        f"Successfully read tile [{i}, {j}]: shape {tile_data.shape}"
+                                    self.logger.info(
+                                        LogSegment.DATA_DOWNLOAD,
+                                        f"Successfully read tile [{i}, {j}]: shape {tile_data.shape}",
                                     )
 
                                     if bands is None:
                                         bands = tile_data.shape[0]
-                                        print(f"   Detected {bands} bands")
+                                        self.logger.info(
+                                            LogSegment.DATA_DOWNLOAD,
+                                            f"Detected {bands} bands",
+                                        )
 
                                     row_tiles.append(
                                         {
@@ -156,13 +186,17 @@ class DownloadPipeline:
                                     )
 
                         except Exception as raster_error:
-                            print(
-                                f"Failed to read tile [{i}, {j}] as raster: {raster_error}"
+                            self.logger.error(
+                                LogSegment.DATA_DOWNLOAD,
+                                f"Failed to read tile [{i}, {j}] as raster: {raster_error}",
                             )
                             debug_filename = f"debug_response_tile_{i}_{j}.bin"
                             with open(debug_filename, "wb") as f:
                                 f.write(response.content)
-                            print(f"   Saved response content to {debug_filename}")
+                            self.logger.info(
+                                LogSegment.DATA_DOWNLOAD,
+                                f"Saved response content to {debug_filename}",
+                            )
 
                             row_tiles.append(
                                 {
@@ -173,7 +207,10 @@ class DownloadPipeline:
                             )
 
                     except Exception as request_error:
-                        print(f"Request failed for tile [{i}, {j}]: {request_error}")
+                        self.logger.error(
+                            LogSegment.DATA_DOWNLOAD,
+                            f"Request failed for tile [{i}, {j}]: {request_error}",
+                        )
                         row_tiles.append(
                             {"data": None, "width_px": width_px, "height_px": height_px}
                         )

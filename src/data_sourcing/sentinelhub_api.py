@@ -9,14 +9,23 @@ from requests.exceptions import RequestException
 from requests_oauthlib import OAuth2Session
 
 import config as conf
+from core.logger import Logger, LogSegment
 from data_sourcing.data_models import CRSType, EvalScriptType
 from data_sourcing.evalscripts import get_evalscript, get_response_setup
 
 
 class SentinelHubAPI:
+    logger: Logger
+    json_request: dict
+
     def __init__(self):
+        self.logger = Logger.get_instance()
+        self.logger.info(LogSegment.SENTINEL_API, "Initializing SentinelHub API")
         self.retrieve_secrets()
         self.json_request = None
+        self.logger.info(
+            LogSegment.SENTINEL_API, "SentinelHub API initialized successfully"
+        )
 
     def retrieve_secrets(self):
         """
@@ -28,6 +37,7 @@ class SentinelHubAPI:
         Returns:
             tuple[OAuth2Session, str, str]: returns the OAuth Session, the secret and token_url
         """
+        self.logger.info(LogSegment.SENTINEL_API, "Retrieving SentinelHub credentials")
         load_dotenv()
 
         client_id = os.getenv("SENTINELHUB_CLIENT_ID")
@@ -38,6 +48,10 @@ class SentinelHubAPI:
         )
 
         if not client_id or not self.client_secret:
+            self.logger.error(
+                LogSegment.SENTINEL_API,
+                "Missing SENTINELHUB_CLIENT_ID or SENTINELHUB_CLIENT_SECRET in .env",
+            )
             raise EnvironmentError(
                 "Missing SENTINELHUB_CLIENT_ID or SENTINELHUB_CLIENT_SECRET in .env"
             )
@@ -172,6 +186,9 @@ class SentinelHubAPI:
             Response of the sentinel hub process API
         """
         if self.json_request is None:
+            self.logger.error(
+                LogSegment.SENTINEL_API, "JSON-Request was not built before sending"
+            )
             raise ValueError("JSON-Request was not built")
 
         token = self.oauth.fetch_token(
@@ -228,6 +245,7 @@ class SentinelHubAPI:
                 response = self.send_request()
 
                 if response.status_code == 200:
+                    self.logger.info(LogSegment.SENTINEL_API, "Request successful")
                     return response
                 elif response.status_code == 429:
                     retry_after_ms = response.headers.get("retry-after", "2000")
@@ -237,18 +255,18 @@ class SentinelHubAPI:
                     except (ValueError, TypeError):
                         wait_time_sec = 2.0
 
-                    print(
-                        f"Rate limit hit (attempt {retries + 1}/{max_retries}). Waiting {wait_time_sec:.1f} seconds..."
+                    self.logger.warning(
+                        LogSegment.SENTINEL_API,
+                        f"Rate limit hit (attempt {retries + 1}/{max_retries}). Waiting {wait_time_sec:.1f} seconds...",
                     )
-
                     time.sleep(wait_time_sec)
                     retries += 1
 
                 elif response.status_code in [500, 502, 503, 504]:
                     wait_time = min(2**retries, 16)
-
-                    print(
-                        f"Server error {response.status_code} (attempt {retries + 1}/{max_retries}). Waiting {wait_time} seconds..."
+                    self.logger.warning(
+                        LogSegment.SENTINEL_API,
+                        f"Server error {response.status_code} (attempt {retries + 1}/{max_retries}). Waiting {wait_time} seconds...",
                     )
                     time.sleep(wait_time)
 
@@ -263,23 +281,27 @@ class SentinelHubAPI:
                         error_msg += f": {error_details}"
                     except Exception:
                         error_msg += f": {response.text}"
-
+                    self.logger.error(LogSegment.SENTINEL_API, error_msg)
                     raise HTTPError(error_msg, response=response)
 
             except RequestException as e:
                 if retries < max_retries - 1:
                     wait_time = min(2**retries, 8)
-                    print(
-                        f"Network error (attempt {retries + 1}/{max_retries}): {e}. Waiting {wait_time} seconds..."
+                    self.logger.warning(
+                        LogSegment.SENTINEL_API,
+                        f"Network error (attempt {retries + 1}/{max_retries}): {e}. Waiting {wait_time} seconds...",
                     )
-
                     time.sleep(wait_time)
 
                     retries += 1
                 else:
+                    self.logger.error(
+                        LogSegment.SENTINEL_API,
+                        f"Network error after {max_retries} attempts: {e}",
+                    )
                     raise
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                self.logger.error(LogSegment.SENTINEL_API, f"Unexpected error: {e}")
                 raise
 
         raise RuntimeError(

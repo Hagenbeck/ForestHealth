@@ -3,6 +3,7 @@ import pathlib as pl
 
 import pandas as pd
 
+from core.logger import Logger, LogSegment
 from data_processing.band_dto import BandDTO
 from data_processing.feature_calculators import FeatureCalculator
 from pydantic_models.feature_setting import Feature, FeatureSetting
@@ -13,6 +14,7 @@ class FeatureService:
     input_data: BandDTO
     feature_setting: FeatureSetting
     created_features: list[str]
+    logger: Logger
 
     def __init__(self, input_data: BandDTO, feature_settings: FeatureSetting = None):
         """Initialize the FeatureService with multi-dimensional array data.
@@ -21,6 +23,8 @@ class FeatureService:
             raw_data (np.ndarray): Input array with shape (index, time, bands)
                 containing monthly satellite imagery data across multiple bands.
         """
+        self.logger = Logger.get_instance()
+        self.logger.info(LogSegment.DATA_PROCESSING, "Initializing FeatureService")
         self.input_data = input_data
 
         if feature_settings is not None:
@@ -43,6 +47,10 @@ class FeatureService:
         Returns:
             pd.DataFrame: DataFrame containing calculated features with columns
         """
+        self.logger.info(
+            LogSegment.DATA_PROCESSING,
+            f"Calculating features with {len(self.feature_setting.features)} feature definitions",
+        )
         feature_df = pd.DataFrame()
         self.created_features = []
 
@@ -52,6 +60,10 @@ class FeatureService:
                 feature, self.input_data
             )
 
+        self.logger.info(
+            LogSegment.DATA_PROCESSING,
+            f"Feature calculation completed. Generated {len(self.created_features)} features",
+        )
         return feature_df
 
     def __get_feature_name(self, feature: Feature) -> str:

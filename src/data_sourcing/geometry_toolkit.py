@@ -10,6 +10,7 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 
 import config as cf
+from core.logger import Logger, LogSegment
 from core.paths import get_data_path
 from data_sourcing.data_models import CRSType
 
@@ -21,6 +22,7 @@ class GeometryToolkit:
     resolution: int
     max_dimension: int
     aoi_crs: CRSType
+    logger: Logger
 
     def __init__(
         self,
@@ -29,6 +31,11 @@ class GeometryToolkit:
         resolution: int = cf.RESOLUTION,
         max_dimension: int = 2500,
     ):
+        self.logger = Logger.get_instance()
+        self.logger.info(
+            LogSegment.GEOMETRY_TOOLKIT,
+            f"Initializing GeometryToolkit with resolution {resolution}m",
+        )
         self.resolution = resolution
         self.max_dimension = max_dimension
         self.aoi_crs = aoi_crs
@@ -226,7 +233,15 @@ class GeometryToolkit:
         with rasterio.open(output_path, "w", **write_options) as dst:
             dst.write(data)
 
-        print(f"GeoTIFF saved to: {output_path}")
-        print(f"  Shape: {(bands, height, width)} (bands, height, width)")
-        print(f"  CRS: {crs}")
-        print(f"  Bounds: ({minx:.2f}, {miny:.2f}, {maxx:.2f}, {maxy:.2f})")
+        self.logger.info(
+            LogSegment.GEOMETRY_TOOLKIT, f"GeoTIFF saved to: {output_path}"
+        )
+        self.logger.info(
+            LogSegment.GEOMETRY_TOOLKIT,
+            f"Shape: {(bands, height, width)} (bands, height, width)",
+        )
+        self.logger.info(LogSegment.GEOMETRY_TOOLKIT, f"CRS: {crs}")
+        self.logger.info(
+            LogSegment.GEOMETRY_TOOLKIT,
+            f"Bounds: ({minx:.2f}, {miny:.2f}, {maxx:.2f}, {maxy:.2f})",
+        )

@@ -9,6 +9,7 @@ from rasterio.warp import (
 from sentinelhub import BBox
 
 import config as cf
+from core.logger import Logger, LogSegment
 from core.paths import get_data_path
 from data_processing.band_dto import BandDTO
 from data_sourcing.data_models import CRSType
@@ -23,8 +24,14 @@ class GeometryProcessor:
     monthly_observations: np.ndarray
     worldcover: rasterio.io.DatasetReader
     resolution: int
+    logger: Logger
 
     def __init__(self, data_file: str = cf.OBSERVATION_SAVE_FILE):
+        self.logger = Logger.get_instance()
+        self.logger.info(
+            LogSegment.DATA_PROCESSING,
+            f"Initializing GeometryProcessor with data file: {data_file}",
+        )
         self.monthly_observations = np.load(get_data_path(data_file))
         self.aoi_geometry = GeometryToolkit.retrieve_geometry(
             get_data_path(cf.GEOMETRY_FILE)
@@ -248,4 +255,6 @@ class GeometryProcessor:
         ) as dst:
             dst.write(reconstructed, 1)
 
-        print(f"GeoTIFF exported to: {output_path}")
+        self.logger.info(
+            LogSegment.DATA_PROCESSING, f"GeoTIFF exported to: {output_path}"
+        )
