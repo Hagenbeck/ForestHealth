@@ -2,13 +2,14 @@ import numpy as np
 from sklearn.cluster import KMeans, kmeans_plusplus
 from sklearn.preprocessing import MinMaxScaler
 
+import config as cf
 from data_processing.feature_service import FeatureService
 from data_processing.geometry_processor import GeometryProcessor
 
 
 class ClusteringPipeline:
     @staticmethod
-    def run(n_clusters: int = 4, output_path: str = "DATA/labels.tif") -> np.ndarray:
+    def run(n_clusters: int = 4, output_path: str = None) -> np.ndarray:
         gp = GeometryProcessor()
         band_data = gp.flatten_and_filter_monthly_data()
 
@@ -25,6 +26,12 @@ class ClusteringPipeline:
 
         labels = kmeans.fit_predict(feature_norm)
 
-        gp.export_reconstruction_as_geotiff(labels, output_path)
+        path = (
+            output_path
+            if output_path is not None
+            else "DATA/" + cf.CLUSTER_LABEL_OUTPUT_FILE
+        )
+
+        gp.export_reconstruction_as_geotiff(labels, path)
 
         return labels
