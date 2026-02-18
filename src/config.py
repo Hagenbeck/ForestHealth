@@ -8,6 +8,7 @@ WORLDCOVER_FILE: str = "ESA_WorldCover_10m_2021_v200_N48E006_Map.tif"
 WORLDCOVER_FILE_RESOLUTION: int = 10
 DEM_FILE: str = "ASTGTMV003_N48E008_dem.tif"
 DEM_FILE_RESOLUTION: int = 30
+MIN_CATCHMENT_AREA_M2: int = 3e5
 OBSERVATION_SAVE_FILE: str = "dataMonthly.npy"
 CLUSTER_LABEL_OUTPUT_FILE: str = "cluster_labels.tif"
 START_DATE: str = "2020-01-01"  # date as "YYYY-mm-dd"

@@ -25,6 +25,7 @@ class GeometryProcessor:
     worldcover: rasterio.io.DatasetReader
     resolution: int
     logger: Logger
+    pixel_coords: np.ndarray | None
 
     def __init__(self, data_file: str = cf.OBSERVATION_SAVE_FILE):
         self.logger = Logger.get_instance()
@@ -45,6 +46,7 @@ class GeometryProcessor:
         self.worldcover = GeometryProcessor.load_raster_layer(cf.WORLDCOVER_FILE)
         self.resolution = cf.RESOLUTION
         self.aoi_worldcover = None
+        self.pixel_coords = None
 
     @staticmethod
     def load_raster_layer(raster_file: str) -> rasterio.io.DatasetReader:
