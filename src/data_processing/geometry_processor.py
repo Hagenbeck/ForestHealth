@@ -19,7 +19,7 @@ class GeometryProcessor:
     aoi_geometry: any
     aoi_crs: CRSType
     aoi_bbox: BBox
-    aoi_worldcover: np.ndarray
+    aoi_worldcover: np.ndarray | None
     monthly_observations: np.ndarray
     worldcover: rasterio.io.DatasetReader
     resolution: int
@@ -59,12 +59,12 @@ class GeometryProcessor:
     def extract_bbox_from_geometry(
         geometry: dict, geometry_crs: CRSType, bbox_crs: CRSType
     ):
-        """_summary_
+        """Extracts the Bounding Box from a geometry in geojson format
 
         Args:
-            geometry (dict): _description_
-            geometry_crs (CRSType): _description_
-            bbox_crs (CRSType): _description_
+            geometry (dict): geojson where the bounding box should be extracted
+            geometry_crs (CRSType): CRS of the geometry
+            bbox_crs (CRSType): CRS that the bounding box should be in
         """
 
         coords = geometry["coordinates"][0][0]
@@ -87,13 +87,61 @@ class GeometryProcessor:
         return BBox((minx, miny, maxx, maxy), crs=bbox_crs)
 
     def retrieve_worldcover_raster_for_aoi(self) -> tuple[np.ndarray, Affine, CRSType]:
-        """_summary_
+        """extract the worldcover raster that fits exactly to the AOI
 
         Returns:
-            tuple[np.ndarray, Affine, CRSType]: _description_
+            tuple[np.ndarray, Affine, CRSType]: returns the Worldcover Raster with its Transform and the CRS-Type
         """
         dst_crs = "EPSG:3857"
         dataset = self.worldcover
+
+        full_array, target_transform = self.transform_and_clip_raster_to_aoi(
+            dataset=dataset, dst_crs=dst_crs, resampling=Resampling.nearest
+        )
+
+        self.aoi_worldcover = full_array
+        return full_array, target_transform, dst_crs
+
+    def transform_and_clip_raster_to_aoi(
+        self,
+        dataset: rasterio.io.DatasetReader,
+        dst_crs: CRSType,
+        resampling: Resampling,
+        band_index: int = 1,
+    ) -> tuple[np.ndarray, Affine]:
+        """transforms a raster to match the pixels of the AOI and clips it
+
+        Args:
+            dataset (rasterio.io.DatasetReader): Raster Dataset to be transformed
+            dst_crs (CRSType): CRS of the AOI
+            resampling (Resampling): Resampling Method
+            band_index (int, optional): index of the band of the raster that should be transformed. Defaults to 1.
+
+        Returns:
+            tuple[np.ndarray, Affine]: transformed raster with its transform
+        """
+        target_transform, height_px, width_px = self.get_target_transform()
+
+        full_array = np.empty((height_px, width_px), dtype=dataset.dtypes[0])
+
+        reproject(
+            source=dataset.read(band_index),
+            destination=full_array,
+            src_transform=dataset.transform,
+            src_crs=dataset.crs,
+            dst_transform=target_transform,
+            dst_crs=dst_crs,
+            resampling=resampling,
+        )
+
+        return full_array, target_transform
+
+    def get_target_transform(self) -> tuple[Affine, int, int]:
+        """Extract the target transform from
+
+        Returns:
+            tuple[Affine, int, int]: returns the transform, the height (px) and width (px)
+        """
 
         minx_aoi, miny_aoi, maxx_aoi, maxy_aoi = self.aoi_bbox
 
@@ -104,26 +152,13 @@ class GeometryProcessor:
             minx_aoi, miny_aoi, maxx_aoi, maxy_aoi, width_px, height_px
         )
 
-        full_array = np.empty((height_px, width_px), dtype=dataset.dtypes[0])
-
-        reproject(
-            source=dataset.read(1),
-            destination=full_array,
-            src_transform=dataset.transform,
-            src_crs=dataset.crs,
-            dst_transform=target_transform,
-            dst_crs=dst_crs,
-            resampling=Resampling.nearest,
-        )
-
-        self.aoi_worldcover = full_array
-        return full_array, target_transform, dst_crs
+        return target_transform, height_px, width_px
 
     def _create_forest_mask_from_worldcover_raster(self) -> np.ndarray:
-        """_summary_
+        """Returns the forest mask based on the worldcover raster
 
         Returns:
-            np.ndarray: _description_
+            np.ndarray: Forest Mask
         """
 
         if self.aoi_worldcover is None:
