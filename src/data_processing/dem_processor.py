@@ -75,6 +75,7 @@ class DEMProcessor:
 
         df = pd.DataFrame(
             {
+                "height": features["height"][rows, cols],
                 "slope_deg": features["slope"][rows, cols],
                 "aspect_deg": features["aspect"][rows, cols],
                 "northness": features["northness"][rows, cols],
@@ -125,6 +126,7 @@ class DEMProcessor:
         distance_to_stream = self.__compute_stream_distance(stream_mask=stream_mask)
 
         return {
+            "height": np.asarray(self.dem_raster),
             "slope": slope_degree,
             "aspect": aspect_degree,
             "northness": northness,
