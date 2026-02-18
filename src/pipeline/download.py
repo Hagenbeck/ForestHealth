@@ -61,6 +61,7 @@ class DownloadPipeline:
             LogSegment.DATA_DOWNLOAD,
             f"Download pipeline completed. Saved {len(result)} monthly observations to {cf.OBSERVATION_SAVE_FILE}",
         )
+        self.logger._flush_logs()
         return np.array(result)
 
     @staticmethod
@@ -238,5 +239,7 @@ class DownloadPipeline:
             stacked_rows.append(stacked_row)
 
         final_data = np.concatenate(stacked_rows, axis=1)
+
+        self.logger._flush_logs()
 
         return final_data

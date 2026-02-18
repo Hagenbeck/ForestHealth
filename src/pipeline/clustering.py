@@ -12,8 +12,11 @@ class ClusteringPipeline:
     @staticmethod
     def run(n_clusters: int = 4, output_path: str = None) -> np.ndarray:
         logger = Logger.get_instance()
-        logger.info(LogSegment.CLUSTERING, f"Starting clustering pipeline with {n_clusters} clusters")
-        
+        logger.info(
+            LogSegment.CLUSTERING,
+            f"Starting clustering pipeline with {n_clusters} clusters",
+        )
+
         gp = GeometryProcessor()
         logger.info(LogSegment.CLUSTERING, "Flattening and filtering monthly data")
         band_data = gp.flatten_and_filter_monthly_data()
@@ -26,7 +29,9 @@ class ClusteringPipeline:
         scaler = MinMaxScaler()
         feature_norm = scaler.fit_transform(feature_df)
 
-        logger.info(LogSegment.CLUSTERING, f"Initializing K-means++ with {n_clusters} clusters")
+        logger.info(
+            LogSegment.CLUSTERING, f"Initializing K-means++ with {n_clusters} clusters"
+        )
         centroids, _ = kmeans_plusplus(
             feature_norm, n_clusters=n_clusters, random_state=20
         )
@@ -44,5 +49,6 @@ class ClusteringPipeline:
         logger.info(LogSegment.CLUSTERING, f"Exporting cluster labels to {path}")
         gp.export_reconstruction_as_geotiff(labels, path)
         logger.info(LogSegment.CLUSTERING, "Clustering pipeline completed successfully")
+        logger._flush_logs()
 
         return labels

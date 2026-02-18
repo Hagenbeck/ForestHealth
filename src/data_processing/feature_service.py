@@ -64,6 +64,8 @@ class FeatureService:
             LogSegment.DATA_PROCESSING,
             f"Feature calculation completed. Generated {len(self.created_features)} features",
         )
+        self.logger._flush_logs()
+
         return feature_df
 
     def __get_feature_name(self, feature: Feature) -> str:
