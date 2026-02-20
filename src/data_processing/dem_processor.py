@@ -83,6 +83,7 @@ class DEMProcessor:
                 "tpi": features["tpi"][rows, cols],
                 "twi": features["twi"][rows, cols],
                 "uca": features["uca"][rows, cols],
+                "log_uca": np.log10(features["uca"][rows, cols]),
                 "distance_to_stream": features["distance_to_stream"][rows, cols],
                 "label": cluster_labels_raster[rows, cols],
             }
@@ -112,7 +113,7 @@ class DEMProcessor:
         )
 
         tpi = self.__compute_topographic_position_index(
-            dem_filled_np=dem_filled_np, radius_m=100
+            dem_filled_np=dem_filled_np, radius_m=250
         )
 
         uca = self.__compute_upslope_contribution_area(
@@ -126,7 +127,7 @@ class DEMProcessor:
         distance_to_stream = self.__compute_stream_distance(stream_mask=stream_mask)
 
         return {
-            "height": np.asarray(self.dem_raster),
+            "height": dem_filled_np,
             "slope": slope_degree,
             "aspect": aspect_degree,
             "northness": northness,
