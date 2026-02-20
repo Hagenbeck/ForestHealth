@@ -2044,6 +2044,17 @@ files = [
 ]
 
 [[package]]
+name = "mord"
+version = "0.7"
+description = "Ordinal regression models"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "mord-0.7.tar.gz", hash = "sha256:b60002734e33ca7fad9f94999c70b27fe038eb069cbd0fb08d6027c3d34a7bb3"},
+]
+
+[[package]]
 name = "mypy-extensions"
 version = "1.1.0"
 description = "Type system extensions for programs checked with the mypy type checker."
@@ -4656,4 +4667,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "9e40cc07e45a437dc26f09f3148348370946cd691b6945b7e4d4b59bff5fa1f4"
+content-hash = "93ffcf4a155ac9ed6a2f1abaaede4266c9b73b385fee7b99b662208be7df9f35"
