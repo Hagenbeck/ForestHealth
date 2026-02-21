@@ -168,7 +168,7 @@ class DEMProcessor:
         slope_rad = np.arctan(np.sqrt(dz_dx**2 + dz_dy**2))
         slope_deg = np.degrees(slope_rad)
 
-        aspect_rad = np.arctan2(dz_dy, -dz_dx)
+        aspect_rad = np.arctan2(-dz_dy, dz_dx)
         aspect_deg = (np.degrees(aspect_rad) + 360) % 360
 
         return slope_rad, slope_deg, aspect_rad, aspect_deg
